@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse
+from django.views.decorators.http import require_http_methods
 import urllib.request
 import datetime
 import pypyodbc
@@ -10,9 +11,9 @@ import csv
 pypyodbc.lowercase = False
 
 
-
-
-
+@require_http_methods(["GET", "POST"])
+def index(request):
+    return HttpResponse(render(request, 'index.html'))
 
 # Create your views here.
 def current_datetime(request):
@@ -30,13 +31,11 @@ def current_datetime(request):
         row = cur.fetchone()
         if row is None:
             break
-
         comparewithcsv(row.get("Name_EN"))
         rsjaro = jaro.jaro_winkler_metric(word,row.get("Name_EN"))
         presaundex = soundx(row.get("Name_EN"))
         rssound    = jaro.jaro_winkler_metric(originalsoundx,presaundex)
         html += u"<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td></tr>".format(word,row.get("Name_EN"),rssound, rsjaro)
-
     cur.close()
     conn.close()
     html += "</table></body></html>"
@@ -58,16 +57,18 @@ def comparewithcsv(name):
             rsjaro      = jaro.jaro_winkler_metric(name,namecsv)
             presaundex  = soundx(namecsv.encode('utf-8'))
             rssound     = jaro.jaro_winkler_metric(originalsoundx,presaundex)
-            
+
             if rsjaro > maxjaro:
                 maxjaro = rsjaro
                 rsjarodata = data.copy()
 
-            if rsjaro > maxsound:
-                maxjaro = rsjaro
-                rssound = data.copy()
+            if rssound > maxsound:
+                maxsound = rssound
+                rssounddata = data.copy()
 
-            print(u"this is {0} - {1} - {2} - {3}".format(name,namecsv,rssound, rsjaro))
+            #print(u"this is {0} - {1} - {2} - {3}".format(name,namecsv,rssound, rsjaro))
+        print(rsjarodata)
+        print(rssounddata)
 
 
 def downloadfile():
