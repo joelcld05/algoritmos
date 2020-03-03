@@ -24,12 +24,14 @@ def current_datetime(request):
     
     html = "<html><body><table><tr><th>word</th><th>Compare</th><th>soundex</th><th>jaro</th></tr>"
     word = 'GoXila'
-    
+    comparationsoundex('Reyes martinez Raul'.upper(),'Reyes Raul'.upper())
+    comparewithcsv('Raul'.upper())
+
     while True:
         row = cur.fetchone()
         if row is None:
             break
-        comparewithcsv(row[1].upper())
+        #comparewithcsv(row[1].upper())
         
         #rsjaro = jaro.jaro_winkler_metric(word,row.get("Name_EN"))
         #presaundex = soundx(row.get("Name_EN"))
@@ -60,19 +62,19 @@ def comparewithcsv(name):
                     for i in akdata: 
                         if i.find('a.k.a. ') > 0:
                             akaname = i.split("'")
-                            rsjaro      = jaro.jaro_winkler_metric(name,akaname[1].upper())*100
+                            rsjaro      = jaro.original_metric(name,akaname[1].upper())*100
                             presaundex  = soundex.phonetics(akaname[1].upper())
-                            rssound     = jaro.jaro_winkler_metric(originalsoundx,presaundex)*100
-                            if rsjaro > 65 :
+                            rssound     = jaro.jaro_metric(originalsoundx,presaundex)*100
+                            if rsjaro > 85 :
                                 print(u"this is {0} - {1} - {2} - {3}".format(name,akaname[1].upper(),rssound, rsjaro))
                                 maxjaro = rsjaro
                                 results.append(row)
-
-                rsjaro      = jaro.jaro_winkler_metric(name,namecsv)*100
-                presaundex  = soundex.phonetics(namecsv)
-                rssound     = jaro.jaro_winkler_metric(originalsoundx,presaundex)*100
                 
-                if rsjaro > 65 :
+                rsjaro      = jaro.original_metric(name,namecsv)*100
+                presaundex  = soundex.phonetics(namecsv)
+                rssound     = jaro.original_metric(originalsoundx,presaundex)*100
+                
+                if rsjaro > 85:
                     print(u"this is {0} - {1} - {2} - {3}".format(name,namecsv,rssound, rsjaro))
                     maxjaro = rsjaro
                     results.append(row)
@@ -80,7 +82,22 @@ def comparewithcsv(name):
                 pass
     #print(results)
     #return results
-            
+
+
+def comparationsoundex(name,compare):
+    soundex = Soundex()
+    lista1 = name.replace(',','').split(' ')
+    lista2 = compare.replace(',','').split(' ') 
+    rs = []
+    for a in lista1: 
+        print('-- '+a)
+        for b in lista2: 
+            print('---- '+b)
+            dato = jaro.jaro_winkler_metric(a,b)*100
+            if 
+            rs.append(dato)
+    print(rs)
+
 
 def downloadfile():
     print('Beginning file download with urllib2...')
