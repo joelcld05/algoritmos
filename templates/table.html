@@ -1,0 +1,43 @@
+{% extends "master.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+      <div class="columns" style="margin-top: 1%">
+        <h4>Resultados:</h4>
+
+        <table>
+            <tr>
+                <th>Busqueda</th>
+                <th>Id</th>
+                <th>Nomber</th>
+                <th>Alias</th>
+                <th>tipo</th>
+                <th>Jaro</th>
+                <th>Sound</th>
+                
+              </tr>
+            {% for a in datsdb %}
+                <tr class="headerserch">
+                    <td colspan="2">{{a.nombre}}</td>
+                    <td colspan="5">Coincidencias: {{a.total}}</td>
+                </tr>
+                
+                {% for b in a.datos %}
+                    <tr>
+                        <td></td>
+                        <td>{{b.id}}</td>
+                        <td>{{b.nombre}}</td>
+                        <td>{{b.alias}}</td>
+                        <td>{{b.tipo}}</td>
+                        <td>{{b.jaro}}</td>
+                        <td>{{b.sound}}</td>
+                    </tr>
+                {% endfor %}
+                
+            {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

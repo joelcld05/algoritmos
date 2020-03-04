@@ -19,5 +19,5 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('date', views.current_datetime),
+    path('resultdos', views.current_datetime,name='resultados'),
 ]
