@@ -5,39 +5,40 @@
     <div class="row">
       <div class="columns" style="margin-top: 1%">
         <h4>Resultados:</h4>
-
-        <table>
-            <tr>
-                <th>Busqueda</th>
-                <th>Id</th>
-                <th>Nomber</th>
-                <th>Alias</th>
-                <th>tipo</th>
-                <th>Jaro</th>
-                <th>Sound</th>
-                
-              </tr>
+        <div  class="accordion" >
             {% for a in datsdb %}
-                <tr class="headerserch">
-                    <td colspan="3">{{a.nombre}}</td>
-                    <td colspan="4">Coincidencias: {{a.total}}</td>
-                </tr>
+              <div class="headerserch">
+                <div class="row">
+                  <div class="nine columns">{{a.nombre}} </div>
+                  <div class="three columns">Coincidencias: {{a.total}}</div>
+                </div>
+              </div>
                 
-                {% for b in a.datos %}
-                    <tr>
-                        <td></td>
-                        <td>{{b.id}}</td>
-                        <td>{{b.nombre}}</td>
-                        <td>{{b.alias}}</td>
-                        <td>{{b.tipo}}</td>
-                        <td>{{b.jaro}}</td>
-                        <td>{{b.sound}}</td>
-                    </tr>
-                {% endfor %}
-                
+              <div>
+                <table>
+                  <tr>
+                    <th>Id</th>
+                    <th>Nomber</th>
+                    <th>Alias</th>
+                    <th>tipo</th>
+                    <th>Jaro</th>
+                    <th>Sound</th>
+                  </tr>
+
+                  {% for b in a.datos %}
+                      <tr>
+                          <td>{{b.id}}</td>
+                          <td>{{b.nombre}}</td>
+                          <td>{{b.alias}}</td>
+                          <td>{{b.tipo}}</td>
+                          <td>{{b.jaro}}</td>
+                          <td>{{b.sound}}</td>
+                      </tr>
+                  {% endfor %}
+                </table>
+              </div>
             {% endfor %}
-        </table>
+        </div>
       </div>
     </div>
-  </div>
 {% endblock %}
