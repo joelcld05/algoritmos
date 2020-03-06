@@ -1,4 +1,10 @@
-pip install pypyodbc
-pip install django
-pip install pyphonetics
-pip install jaro-winkler
+Dependencias de python:
+    pip install pypyodbc
+    pip install django
+    pip install pyphonetics
+    pip install jaro-winkler
+
+instalar el driver de access ya sea de 64 o 32 bits
+
+Ir a la carpeta y ejecutar 
+    python .\manage.py runserver

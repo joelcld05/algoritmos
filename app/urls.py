@@ -20,4 +20,5 @@ from . import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('resultdos', views.current_datetime,name='resultados'),
+    path('guarda', views.guarda,name='guarda'),
 ]

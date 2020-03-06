@@ -1,31 +1,34 @@
 {% extends "master.html" %}
-
 {% block content %}
 <div class="container">
     <div class="row">
       <div class="columns" style="margin-top: 1%">
-        <h4>Resultados:</h4>
+        <h4>Resultados con 85% de coincidencia:</h4>
         <div  class="accordion" >
             {% for a in datsdb %}
-              <div class="headerserch">
+              <div class="headerserch" id="contenedor{{a.idpersona}}">
                 <div class="row">
                   <div class="nine columns">{{a.nombre}} </div>
                   <div class="three columns">Coincidencias: {{a.total}}</div>
                 </div>
               </div>
-                
               <div>
-                <table>
-                  <tr>
-                    <th>Id</th>
-                    <th>Nomber</th>
-                    <th>Alias</th>
-                    <th>tipo</th>
-                    <th>Jaro</th>
-                    <th>Sound</th>
-                  </tr>
-
-                  {% for b in a.datos %}
+                <form class="forms">
+                  <div class="row" style="margin-top: 5px;" id="forma{{a.idpersona}}">
+                    <div class="two columns">Observaciones:</div>
+                    <div class="five columns"><textarea maxlength="250" name="observacion" id="comentario{{a.idpersona}}" style="width: 100%;" rows="10"></textarea></div>
+                    <div class="two columns"><a id="{{a.idpersona}}" class="button button-primary guardadatos" href="#">Guardar</a></div>
+                  </div>
+                  <table>
+                    <tr>
+                      <th>Id</th>
+                      <th>Nomber</th>
+                      <th>Alias</th>
+                      <th>tipo</th>
+                      <th>Jaro</th>
+                      <th>Sound</th>
+                    </tr>
+                    {% for b in a.datos %}
                       <tr>
                           <td>{{b.id}}</td>
                           <td>{{b.nombre}}</td>
@@ -34,11 +37,31 @@
                           <td>{{b.jaro}}</td>
                           <td>{{b.sound}}</td>
                       </tr>
-                  {% endfor %}
-                </table>
+                    {% endfor %}
+                  </table>
+                </form>
               </div>
             {% endfor %}
         </div>
       </div>
     </div>
+    <script>
+      $( function() {
+        $( ".guardadatos" ).click(function(e) {
+          var id = $(this).attr('id');
+          var comen = $("#comentario"+id).val();
+          $("#contenedor"+id).addClass('done');
+          $("#forma"+id).remove();
+          var dataString = {'id':id,'comentario': comen}
+          $.ajax({
+            type: "POST",
+            url: "{% url 'guarda' %}",
+            content_type:'application/json',
+            data: dataString,
+              success: function() {
+            }
+          });
+        });
+      });
+    </script>
 {% endblock %}

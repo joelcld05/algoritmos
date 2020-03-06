@@ -35,6 +35,12 @@
   margin: 2px;
 }
 
+.forms{
+  padding: 10px;
+}
+.done{
+  background-color: green;
+}
 .container {
   position: relative;
   width: 100%;
