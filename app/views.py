@@ -2,20 +2,29 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.http import require_http_methods
 from pyphonetics import Soundex
+from algoritmos import settings
 import urllib.request
 import datetime
 import pypyodbc
 import jaro
 import csv
-
+import os
 
 @require_http_methods(["GET", "POST"])
 def index(request):
+    connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
+    conn = pypyodbc.connect(connStr)
+    cur = conn.cursor()
+    cur.execute("insert into Creatures(CreatureID, Name_EN, Name_JP) values (4,'Joshua','Joel')")
+    cur.commit()
+    cur.close()
+    conn.close()
     return HttpResponse(render(request, 'index.html'))
 
 # Create your views here.
 def current_datetime(request):
-    connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\Users\jcleveland\Documents\GitHub\busqueda\algoritmos\db.accdb;")
+    downloadfile()
+    connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
     conn = pypyodbc.connect(connStr)
     cur = conn.cursor()
     cur.execute("SELECT CreatureID, Name_EN, Name_JP FROM Creatures")
@@ -38,7 +47,7 @@ def comparewithcsv(name):
     soundex = Soundex()
     originalsoundx = soundex.phonetics(name)
     results = []
-    maxvalue = 90
+    maxvalue = 85
     with open('file.csv', newline='') as csvfile:
         spamreader = csv.reader(csvfile)
         for row in spamreader:
@@ -54,10 +63,10 @@ def comparewithcsv(name):
                             rssound     = jaro.jaro_winkler_metric(originalsoundx,presaundex)*100
                             if rsjaro >= maxvalue or rssound >= maxvalue:
                                 results.append([row[0],row[1],akaname,row[3],rsjaro, rssound])
-                                continue
+                                
                             rsjarowords = comparationbyword(name, akaname)
                             if rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
-                                results.append({'id':row[0],'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':float("{0:.2f}".format(rsjarowords[0])), 'sound':float("{0:.2f}".format(rsjarowords[1]))})
+                                results.append({'id':row[0],'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjarowords[0], 'sound':float("{0:.2f}".format(rsjarowords[1]))})
 
                 namecsv     = row[1].upper()
                 rsjaro      = jaro.jaro_winkler_metric(name,namecsv)*100
@@ -65,14 +74,16 @@ def comparewithcsv(name):
                 rssound     = jaro.jaro_winkler_metric(originalsoundx,presaundex)*100
                 if rsjaro >= maxvalue and rssound >= maxvalue:
                     results.append({'id':row[0],'nombre':row[1],'alias':'','tipo':row[3],'jaro':rsjaro, 'sound':rssound})
-                    continue
+                    
                 rsjarowords = comparationbyword(name, namecsv)
-                if  rsjarowords[1] >= 90 and rsjarowords[0] >= 85:
-                    results.append({'id':row[0],'nombre':row[1],'alias':'','tipo':row[3],'jaro':float("{0:.2f}".format(rsjarowords[0])), 'sound':float("{0:.2f}".format(rsjarowords[1]))})        
+                if  rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
+                    results.append({'id':row[0],'nombre':row[1],'alias':'','tipo':row[3],'jaro':rsjarowords[0], 'sound':float("{0:.2f}".format(rsjarowords[1]))})        
+            
             except:
                 pass
             
     results = sorted(results, key=lambda x: x['jaro'], reverse=True)
+
     return results
 
 
@@ -83,8 +94,6 @@ def comparationbyword(name,compare):
     maxvalue = 85
     cuentaj = 0
     cuentas = 0
-    maxjaro=[]
-    maxsound= []
     indexj = 0
     indexs = 0
     for a in lista1: 
@@ -97,14 +106,12 @@ def comparationbyword(name,compare):
             if datosound >= maxvalue:
                 indexs +=1
                 cuentas += datosound
-    
     cuentaj = cuentaj / max([len(lista1),indexj])
     cuentas = cuentas / max([len(lista1),indexs])
     return [cuentaj,cuentas]
 
 
 def downloadfile():
-    print('Beginning file download with urllib2...')
-    url = 'https://people.sc.fsu.edu/~jburkardt/data/csv/oscar_age_male.csv'
-    urllib.request.urlretrieve(url, 'C:\\Users\\jcleveland\\Documents\\GitHub\\busqueda\\algoritmos\\file.csv')
+    url = 'https://www.treasury.gov/ofac/downloads/sdn.csv'
+    urllib.request.urlretrieve(url, os.path.join(settings.BASE_DIR, 'file.csv'))
     
