@@ -1,13 +1,41 @@
 {% extends "master.html" %}
-
+{% load static %}
 {% block content %}
 <div class="container">
     <div class="row">
-      <div class="one-half column" style="margin-top: 15%">
-        <h4>Validar datos:</h4>
-        <a class="button button-primary"  href="{% url 'resultados' %}">Proceder con csv</a>
-        <a class="button button-primary"  href="{% url 'resultados' %}">Proceder por request</a>
+      <div class="column" style="background-color: #dce6f2; padding: 10px;">
+        <div class="row">
+          <div class="nine columns">
+            <div style="color:#1f497d; font-weight:bold; font-size: 28px;">Búsqueda de coincidencias, OFAC</div>
+            <div>Ingreso</div>
+          </div>
+          <div class="three columns">
+            <img src="{% static 'images/Logov6black.png' %}" style="width: 80%;">
+          </div>
+        </div>
       </div>
+    </div>
+    <div class="row">
+      <div class="column" style="background-color:#bfbfbf; height: 20px;"></div>
+    </div>
+    <div class="row" style="margin-top: 10%;">
+      <div class="three columns" style="color:white;">.</div>
+        <div class="two columns">
+          <img src="{% static 'images/lock.png' %}" style="width: 80%;">
+        </div>
+        <div class="seven columns">
+          <form>
+            <div class="row">
+              <label for="" class="columns" style="width: 100px;">Usuario:</label>
+              <input type="text" name="usuario">
+            </div>
+            <div class="row">
+              <label for="" class="columns" style="width: 100px;">Contraseña:</label>
+              <input type="password" name="password">
+            </div>
+            <button class="button columns three button-primary" type="submit">Iniciar Sesion</a>
+          </form>
+        </div>
     </div>
   </div>
 {% endblock %}

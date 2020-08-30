@@ -1,17 +1,40 @@
 {% extends "master.html" %}
+{% load static %}
 {% block content %}
 <div class="container">
+
+  <div class="row">
+    <div class="column" style="background-color: #dce6f2; padding: 10px;">
+      <div class="row">
+        <div class="nine columns">
+          <div style="color:#1f497d; font-weight:bold; font-size: 28px;">Búsqueda de coincidencias, OFAC</div>
+          <div>Busqueda</div>
+        </div>
+        <div class="three columns">
+          <img src="{% static 'images/Logov6black.png' %}" style="width: 80%;">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="column" style="background-color:#bfbfbf; height: 20px;"></div>
+  </div>
+
     <div class="row">
       <div class="columns" style="margin-top: 1%">
-        <h4>Resultados con 85% de coincidencia:</h4>
-        <a class="button button-primary"  id="inicia">Iniciar Busqueda</a>
+        <h4>Resultados encontrados con 85% de coincidencia: <span id="total">0</span></h4>
+        <div class="row">
+          <a class="button button-primary columns three "  id="inicia">Iniciar Busqueda</a>
+          <a class="button columns three " href="{% url 'index' %}">Cerrar Sesion</a>
+        </div>
+        
 
-        <div id="dialog" title="Busqueda">
+        <div id="dialog" title="Buscando Coincidencias">
           <div class="progress-label">Iniciar Busqueda...</div>
           <div id="progressbar"></div>
         </div>
 
-        <div  class="accordion" id="lista">  
+        <div  class="accordion" id="lista" style="margin-bottom: 30px;">  
                     
         </div>
       </div>
@@ -63,7 +86,7 @@
           beforeClose: function() {
             downloadButton.button( "option", {
               disabled: false,
-              label: "Iniciar Busqueda"
+              label: "Iniciando Busqueda"
             });
           }
         }),
@@ -81,7 +104,7 @@
       progressbar.progressbar({
         value: false,
         change: function() {
-          progressLabel.text( "Buscando Coincidencias: " + progressbar.progressbar( "value" ).toFixed(2) + "%" );
+          progressLabel.text( "Progreso: " + progressbar.progressbar( "value" ).toFixed(2) + "%" );
         },
         complete: function() {
           progressLabel.text( "Completado" );
@@ -92,6 +115,7 @@
       var nombres={{datsdb}}
       {% endautoescape %}
 
+      var total=0;
 
       function progress(inindex=0) {
         var val = progressbar.progressbar( "value" ) || 0;
@@ -100,7 +124,7 @@
         var index = inindex+1;
         
         if(tamano>=index && !exitloop){
-          progressbar.progressbar( "value", (index/tamano)*100);
+          
           var dataString = {'nombre':nombres[inindex][1]}
           $.ajax({
             type: "POST",
@@ -110,7 +134,11 @@
           }).done(function(value) {
             if(value.length>0){
               createitemlist(nombres[inindex][0],value[0])
+              total++;
+              $("#total").text(total);
+              
             }
+            progressbar.progressbar( "value", (index/tamano)*100);
             progress(index);            
           });
         }else{
@@ -155,7 +183,7 @@
           newtr.append(td.clone().text(element.tipo));
           newtr.append(td.clone().text(element.jaro.toFixed(2)));
           newtr.append(td.clone().text(element.sound.toFixed(2)));
-          newtr.append(td.clone().append($('<input type="checkbox" name="conservar-'+element.id+'" id="conservar'+element.id+'" />')));
+          newtr.append(td.clone().append($('<select name="conservar-'+element.id+'" id="conservar'+element.id+'" ><option value="des" selected>Descartar</option><option value="rep">Reportar</option></select>')));
           newtr.append(td.clone().append($('<input type="text" max="250" name="observacion-'+element.id+'" id="comentario'+element.id+'" style="width: 400px;"/>')));
           table.append(newtr);
         });
