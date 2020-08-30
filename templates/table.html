@@ -4,48 +4,22 @@
     <div class="row">
       <div class="columns" style="margin-top: 1%">
         <h4>Resultados con 85% de coincidencia:</h4>
-        <div  class="accordion" >
-            {% for a in datsdb %}
-              <div class="headerserch" id="contenedor{{a.idpersona}}">
-                <div class="row">
-                  <div class="nine columns">{{a.nombre}} </div>
-                  <div class="three columns">Coincidencias: {{a.total}}</div>
-                </div>
-              </div>
-              <div>
-                <form class="forms">
-                  <div class="row" style="margin-top: 5px;" id="forma{{a.idpersona}}">
-                    <div class="two columns">Observaciones:</div>
-                    <div class="five columns"><textarea maxlength="250" name="observacion" id="comentario{{a.idpersona}}" style="width: 100%;" rows="10"></textarea></div>
-                    <div class="two columns"><a id="{{a.idpersona}}" class="button button-primary guardadatos" href="#">Guardar</a></div>
-                  </div>
-                  <table>
-                    <tr>
-                      <th>Id</th>
-                      <th>Nomber</th>
-                      <th>Alias</th>
-                      <th>tipo</th>
-                      <th>Jaro</th>
-                      <th>Sound</th>
-                    </tr>
-                    {% for b in a.datos %}
-                      <tr>
-                          <td>{{b.id}}</td>
-                          <td>{{b.nombre}}</td>
-                          <td>{{b.alias}}</td>
-                          <td>{{b.tipo}}</td>
-                          <td>{{b.jaro}}</td>
-                          <td>{{b.sound}}</td>
-                      </tr>
-                    {% endfor %}
-                  </table>
-                </form>
-              </div>
-            {% endfor %}
+        <a class="button button-primary"  id="inicia">Iniciar Busqueda</a>
+
+        <div id="dialog" title="Busqueda">
+          <div class="progress-label">Iniciar Busqueda...</div>
+          <div id="progressbar"></div>
+        </div>
+
+        <div  class="accordion" id="lista">  
+                    
         </div>
       </div>
     </div>
+    
+    
     <script>
+ 
       $( function() {
         $( ".guardadatos" ).click(function(e) {
           var id = $(this).attr('id');
@@ -62,6 +36,140 @@
             }
           });
         });
+
       });
     </script>
+
+
+  <script>
+    $( function() {
+
+      var progressTimer,
+        progressbar = $( "#progressbar" ),
+        progressLabel = $( ".progress-label" ),
+        exitloop=false,
+        dialog = $( "#dialog" ).dialog({
+          autoOpen: false,
+          closeOnEscape: false,
+          resizable: false,
+          close: closeDownload,
+          overlay: {
+            opacity: 0.5,
+            background: "black"
+          },
+          open: function() {
+            progressTimer = setTimeout( progress, 1000 );
+          },
+          beforeClose: function() {
+            downloadButton.button( "option", {
+              disabled: false,
+              label: "Iniciar Busqueda"
+            });
+          }
+        }),
+        
+        downloadButton = $( "#inicia" )
+          .button()
+          .on( "click", function() {
+            $( this ).button( "option", {
+              disabled: true,
+              label: "Buscando Coincidencias..."
+            });
+            dialog.dialog( "open" );
+          });
+  
+      progressbar.progressbar({
+        value: false,
+        change: function() {
+          progressLabel.text( "Buscando Coincidencias: " + progressbar.progressbar( "value" ).toFixed(2) + "%" );
+        },
+        complete: function() {
+          progressLabel.text( "Completado" );
+        }
+      });
+  
+      {% autoescape off %}
+      var nombres={{datsdb}}
+      {% endautoescape %}
+
+
+      function progress(inindex=0) {
+        var val = progressbar.progressbar( "value" ) || 0;
+        var tamano=nombres.length;
+        
+        var index = inindex+1;
+        
+        if(tamano>=index && !exitloop){
+          progressbar.progressbar( "value", (index/tamano)*100);
+          var dataString = {'nombre':nombres[inindex][1]}
+          $.ajax({
+            type: "POST",
+            url: "{% url 'compara' %}",
+            content_type:'application/json',
+            data: dataString
+          }).done(function(value) {
+            if(value.length>0){
+              createitemlist(nombres[inindex][0],value[0])
+            }
+            progress(index);            
+          });
+        }else{
+          exitloop=true;
+          $( "#dialog" ).dialog("close");
+        }
+      }
+  
+      function closeDownload() {
+        console.log('close');
+        exitloop=true;
+        $( "#dialog" ).dialog("close");
+        alert('Proceso Detenido');
+      }
+
+      function uniq(arr) {
+        return  arr.reduce((acc, current) => {
+          const x = acc.find(item => item.id === current.id);
+          if (!x) {
+            return acc.concat([current]);
+          } else {
+            return acc;
+          }
+        }, []);
+      }
+
+      function createitemlist(id, data){
+        var div=$('<div></div>');
+        var header  =$('<h2></h2>').attr('id','contenedor'+id).text(data.nombre+' - Coincidencias: '+data.total);
+
+        var formcontainer = div.clone()
+        var form          = $('<form class="forms'+id+'"></form>');
+        var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nomber</th><th>Alias</th><th>tipo</th><th>Jaro</th><th>Sound</th><th>Descartar</th><th>Comentario</th></tr></table>');
+        var tr            = $('<tr></tr>');
+        var td            = $('<td></td>');
+        var newdatos=uniq(data.datos);
+        newdatos.forEach(element => {
+          var newtr = tr.clone();
+          newtr.append(td.clone().text(element.id));
+          newtr.append(td.clone().text(element.nombre));
+          newtr.append(td.clone().text(element.alias));
+          newtr.append(td.clone().text(element.tipo));
+          newtr.append(td.clone().text(element.jaro.toFixed(2)));
+          newtr.append(td.clone().text(element.sound.toFixed(2)));
+          newtr.append(td.clone().append($('<input type="checkbox" name="conservar-'+element.id+'" id="conservar'+element.id+'" />')));
+          newtr.append(td.clone().append($('<input type="text" max="250" name="observacion-'+element.id+'" id="comentario'+element.id+'" style="width: 400px;"/>')));
+          table.append(newtr);
+        });
+
+        form.append(table);
+        formcontainer.append(form);
+        
+
+        $( "#lista" ).append(header);
+        $( "#lista" ).append(formcontainer);
+        $('.accordion').accordion('destroy').accordion({collapsible: true,active:":last",heightStyle:"content"});
+
+      }
+    } );
+  </script>
+
 {% endblock %}

@@ -19,6 +19,7 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('resultdos', views.current_datetime,name='resultados'),
+    path('resultdos', views.initpage,name='resultados'),
+    path('compara', views.getresult,name='compara'),
     path('guarda', views.guarda,name='guarda'),
 ]

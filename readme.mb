@@ -8,3 +8,44 @@ instalar el driver de access ya sea de 64 o 32 bits
 
 Ir a la carpeta y ejecutar 
     python .\manage.py runserver
+
+
+
+
+    {% for a in datsdb %}
+              <div class="headerserch" id="contenedor{{a.idpersona}}">
+                <div class="row">
+                  <div class="nine columns">{{a.nombre}} </div>
+                  <div class="three columns">Coincidencias: {{a.total}}</div>
+                </div>
+              </div>
+              <div>
+                <form class="forms">
+                  <div class="row" style="margin-top: 5px;" id="forma{{a.idpersona}}">
+                    <div class="two columns">Observaciones:</div>
+                    <div class="five columns"><textarea maxlength="250" name="observacion" id="comentario{{a.idpersona}}" style="width: 100%;" rows="10"></textarea></div>
+                    <div class="two columns"><a id="{{a.idpersona}}" class="button button-primary guardadatos" href="#">Guardar</a></div>
+                  </div>
+                  <table>
+                    <tr>
+                      <th>Id</th>
+                      <th>Nomber</th>
+                      <th>Alias</th>
+                      <th>tipo</th>
+                      <th>Jaro</th>
+                      <th>Sound</th>
+                    </tr>
+                    {% for b in a.datos %}
+                      <tr>
+                          <td>{{b.id}}</td>
+                          <td>{{b.nombre}}</td>
+                          <td>{{b.alias}}</td>
+                          <td>{{b.tipo}}</td>
+                          <td>{{b.jaro}}</td>
+                          <td>{{b.sound}}</td>
+                      </tr>
+                    {% endfor %}
+                  </table>
+                </form>
+              </div>
+            {% endfor %}
