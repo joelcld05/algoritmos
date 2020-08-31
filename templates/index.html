@@ -24,15 +24,18 @@
           <img src="{% static 'images/lock.png' %}" style="width: 80%;">
         </div>
         <div class="seven columns">
-          <form>
+          <form action="{% url 'login' %}" method="POST">
             <div class="row">
-              <label for="" class="columns" style="width: 100px;">Usuario:</label>
-              <input type="text" name="usuario">
+              <label for="" class="columns" style="width: 100px;" >Usuario:</label>
+              <input type="text" name="user" required>
             </div>
             <div class="row">
               <label for="" class="columns" style="width: 100px;">Contraseña:</label>
-              <input type="password" name="password">
+              <input type="password" name="password" required>
             </div>
+            <span style="color:red;">{{message}}</span>
+            <br/>
+            <br/>
             <button class="button columns three button-primary" type="submit">Iniciar Sesion</a>
           </form>
         </div>

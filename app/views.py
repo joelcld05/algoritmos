@@ -1,9 +1,7 @@
 from django.shortcuts import render
-from django.core.cache import cache
-from django.http import (HttpResponse,JsonResponse)
+from django.http import (HttpResponse,HttpResponseRedirect,JsonResponse)
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
-from multiprocessing import Pool
 from pyphonetics import Soundex
 from algoritmos import settings
 import urllib.request
@@ -21,7 +19,45 @@ maxvalue = 85
 
 @require_http_methods(["GET"])
 def index(request):
-    return HttpResponse(render(request, 'index.html'))
+    if 'username' in request.COOKIES:
+        return HttpResponseRedirect('resultdos')
+    else:
+        response = HttpResponse(render(request, 'index.html'))
+        response.delete_cookie('message')
+        return response
+
+
+@csrf_exempt 
+def login(request):
+    if request.method == "POST":
+        connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
+        conn = pypyodbc.connect(connStr)
+        cur = conn.cursor()
+        query = "SELECT count(id) FROM tbl_permisos where tipo='Administrador' and  User ='"+request.POST['user'] +"' and password='"+request.POST['password'] +"'"
+
+        cur.execute(query)
+        rs = []
+        while True:
+            row = cur.fetchone()
+            if row is None:
+                break
+            rs=row
+            
+        if rs[0]>=1:
+            username = request.POST['user']
+            response = HttpResponseRedirect('resultdos')
+            response.set_cookie('username', datetime.datetime.now())
+        else:
+            response = HttpResponse(render(request, 'index.html',{"message" : 'Credenciales incorrectas'}))
+        return response
+    else:
+        return HttpResponseRedirect('/')
+
+
+def logout(request):
+    response = HttpResponseRedirect('/')
+    response.delete_cookie('username')
+    return response
 
 
 @csrf_exempt 
@@ -44,23 +80,24 @@ def guarda(request):
 
 @require_http_methods(["GET"])
 def initpage(request):
-    downloadfile()
-    with open('data.json') as json_file:
-        data = json.load(json_file)
-    
-    connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
-    conn = pypyodbc.connect(connStr)
-    cur = conn.cursor()
-    query = "SELECT id, Name_EN FROM clientes1"
-    cur.execute(query)
-    rs = []
-    #print(alt)
-    while True:
-        row = cur.fetchone()
-        if row is None:
-            break
-        rs.append(row)
-    return HttpResponse(render(request, 'table.html',{'datsdb':json.dumps(rs)}))
+    if 'username' in request.COOKIES:
+        downloadfile()
+        #with open('data.json') as json_file:
+        #    data = json.load(json_file)
+        connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
+        conn = pypyodbc.connect(connStr)
+        cur = conn.cursor()
+        query = "SELECT id, Nombre FROM clientes"
+        cur.execute(query)
+        rs = []
+        while True:
+            row = cur.fetchone()
+            if row is None:
+                break
+            rs.append(row)
+        return HttpResponse(render(request, 'table.html',{'datsdb':json.dumps(rs)}))
+    else:
+        return HttpResponseRedirect('/')
 
 
 @csrf_exempt 

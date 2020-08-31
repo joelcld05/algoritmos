@@ -24,13 +24,13 @@
       <div class="columns" style="margin-top: 1%">
         <h4>Resultados encontrados con 85% de coincidencia: <span id="total">0</span></h4>
         <div class="row">
-          <a class="button button-primary columns three "  id="inicia">Iniciar Busqueda</a>
+          <a class="button button-primary columns three "  id="inicia">Iniciando Busqueda</a>
           <a class="button columns three " href="{% url 'index' %}">Cerrar Sesion</a>
         </div>
         
 
         <div id="dialog" title="Buscando Coincidencias">
-          <div class="progress-label">Iniciar Busqueda...</div>
+          <div class="progress-label">Iniciando Busqueda...</div>
           <div id="progressbar"></div>
         </div>
 
@@ -65,6 +65,13 @@
 
 
   <script>
+
+      function sumbitform(id) {
+        console.log(id);
+        //$("#forms"+id).ajaxForm({url: "{% url 'guarda' %}", type: 'post'});
+        $(".forms"+id).attr("disabled", true);
+      }
+  
     $( function() {
 
       var progressTimer,
@@ -81,7 +88,7 @@
             background: "black"
           },
           open: function() {
-            progressTimer = setTimeout( progress, 1000 );
+            progressTimer = setTimeout( progress, 100 );
           },
           beforeClose: function() {
             downloadButton.button( "option", {
@@ -118,13 +125,14 @@
       var total=0;
 
       function progress(inindex=0) {
+        
         var val = progressbar.progressbar( "value" ) || 0;
         var tamano=nombres.length;
         
         var index = inindex+1;
         
         if(tamano>=index && !exitloop){
-          
+
           var dataString = {'nombre':nombres[inindex][1]}
           $.ajax({
             type: "POST",
@@ -146,9 +154,8 @@
           $( "#dialog" ).dialog("close");
         }
       }
-  
+
       function closeDownload() {
-        console.log('close');
         exitloop=true;
         $( "#dialog" ).dialog("close");
         alert('Proceso Detenido');
@@ -170,9 +177,15 @@
         var header  =$('<h2></h2>').attr('id','contenedor'+id).text(data.nombre+' - Coincidencias: '+data.total);
 
         var formcontainer = div.clone()
-        var form          = $('<form class="forms'+id+'"></form>');
+        var form          = $('<form id="forms'+id+'"></form>');
         var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nomber</th><th>Alias</th><th>tipo</th><th>Jaro</th><th>Sound</th><th>Descartar</th><th>Comentario</th></tr></table>');
         var tr            = $('<tr></tr>');
+
+
+        form.append($('<input type="hidden" name="idcliente" value="'+id+'"/>'));
+        form.append($('<a class="button button-primary" onclick="sumbitform('+id+')">Guardar Infromacion</a>'));
+        form.append($('<input type="hidden" name="nombrecliente" value="'+data.nombre+'"/>'));
+
         var td            = $('<td></td>');
         var newdatos=uniq(data.datos);
         newdatos.forEach(element => {
@@ -183,11 +196,12 @@
           newtr.append(td.clone().text(element.tipo));
           newtr.append(td.clone().text(element.jaro.toFixed(2)));
           newtr.append(td.clone().text(element.sound.toFixed(2)));
-          newtr.append(td.clone().append($('<select name="conservar-'+element.id+'" id="conservar'+element.id+'" ><option value="des" selected>Descartar</option><option value="rep">Reportar</option></select>')));
-          newtr.append(td.clone().append($('<input type="text" max="250" name="observacion-'+element.id+'" id="comentario'+element.id+'" style="width: 400px;"/>')));
+          newtr.append(td.clone().append($('<select class="forms'+id+'" name="conservar-'+element.id+'" id="conservar'+element.id+'" ><option value="des" selected>Descartar</option><option value="rep">Reportar</option></select>')));
+          newtr.append(td.clone().append($('<input class="forms'+id+'" type="text" max="250" name="observacion-'+element.id+'" id="comentario'+element.id+'" style="width: 400px;"/>')));
           table.append(newtr);
         });
 
+        form.append(table);
         form.append(table);
         formcontainer.append(form);
         

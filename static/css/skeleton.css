@@ -26,6 +26,10 @@
 */
 
 
+input:disabled,select:disabled {
+  background: #dddddd !important;
+}
+
 /* Grid
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 .headerserch{
