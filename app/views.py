@@ -64,16 +64,25 @@ def logout(request):
 def guarda(request):
     if request.method == "POST":
         try:
+            
+            idcliente=request.POST['idcliente']
+            nombrecliente=request.POST['idcliente']
+            idcompara=request.POST[idcliente+'-idcompara']
+            lista1 = list(dict.fromkeys(idcompara.split(',')))
             connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
             conn = pypyodbc.connect(connStr)
             cur = conn.cursor()
-            cur.execute("insert into DatosGuardados(idclinete, observacion) values ("+request.POST['id']+",'"+request.POST['comentario'].replace("'",'')+"')")
+            for a in lista1: 
+                query = "insert into DatosGuardados(idclinete, observacion,idcompara,nombrecompara,reporta,jaro,sound)"
+                query +=  " values ("+idcliente+",'"+request.POST['observacion-'+a]+"','"+a+"','"+request.POST['nombrecompara-'+a].replace("'",'')
+                query +=  "',"+request.POST['conservar-'+a]+","+request.POST['jaro-'+a]+","+request.POST['sound-'+a]+" )"
+                cur.execute(query)
             cur.commit()
             cur.close()
             conn.close()
             return HttpResponse('{"response":"true"}',content_type='application/json')
         except:
-            pass
+            return HttpResponse('{"response":"false"}',content_type='application/json')
     return HttpResponse('{"response":"fasle"}',content_type='application/json')
 
 
@@ -82,8 +91,6 @@ def guarda(request):
 def initpage(request):
     if 'username' in request.COOKIES:
         downloadfile()
-        #with open('data.json') as json_file:
-        #    data = json.load(json_file)
         connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
         conn = pypyodbc.connect(connStr)
         cur = conn.cursor()
@@ -142,10 +149,10 @@ def comparewithcsv(name):
                         akaname     = i[3].strip().replace(',','').upper()
                         comparename=comparationcompletename(name,akaname,originalsoundx)
                         if comparename[0] >= maxvalue and comparename[1] >= maxvalue:
-                            results.append({'id':row[0]+'-aka' ,'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjaro, 'sound':rssound})
+                            results.append({'id':row[0]+'-'+i[1] ,'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjaro, 'sound':rssound})
                         rsjarowords = comparationbyword(name, akaname)
                         if rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
-                            results.append({'id':row[0]+'-aka' ,'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjarowords[0], 'sound':rsjarowords[1]})
+                            results.append({'id':row[0]+'-'+i[1] ,'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjarowords[0], 'sound':rsjarowords[1]})
                 
                 namecsv     = row[1].replace(',','').upper()
 
@@ -190,7 +197,6 @@ def comparationbyword(name,compare):
                 indexs +=1
                 cuentas += datosound
 
-
     cuentaj = cuentaj / max([len(lista1),indexj])
     cuentas = cuentas / max([len(lista1),indexs])
     
@@ -208,10 +214,10 @@ def downloadfile():
         name=datetime.datetime.now().strftime("%d-%m-%Y")
         urlsdn = 'https://www.treasury.gov/ofac/downloads/sdn.csv'
         urlalt = 'https://www.treasury.gov/ofac/downloads/alt.csv'
-        urllib.request.urlretrieve(urlsdn, os.path.join(settings.BASE_DIR, 'static/data/sdn'+name+'.csv'))
-        urllib.request.urlretrieve(urlalt, os.path.join(settings.BASE_DIR, 'static/data/alt'+name+'.csv'))
+        urllib.request.urlretrieve(urlsdn, os.path.join(settings.BASE_DIR, 'static/data/sdn-'+name+'.csv'))
+        urllib.request.urlretrieve(urlalt, os.path.join(settings.BASE_DIR, 'static/data/alt-'+name+'.csv'))
 
-        with open('static/data/alt.csv', newline='') as csvfile:
+        with open('static/data/alt-'+name+'.csv', newline='') as csvfile:
             spamreader = csv.reader(csvfile)
             for row in spamreader:
                 if not row[0] in alt:
@@ -219,7 +225,7 @@ def downloadfile():
                 else:
                     alt[row[0]].append(row)
 
-        with open('static/data/sdn.csv', newline='') as csvfile:
+        with open('static/data/sdn-'+name+'.csv', newline='') as csvfile:
             spamreader = csv.reader(csvfile)
             for row in spamreader:
                 akadato=[]

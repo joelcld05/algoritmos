@@ -35,14 +35,13 @@
         </div>
 
         <div  class="accordion" id="lista" style="margin-bottom: 30px;">  
-                    
+          
         </div>
       </div>
     </div>
     
     
     <script>
- 
       $( function() {
         $( ".guardadatos" ).click(function(e) {
           var id = $(this).attr('id');
@@ -59,7 +58,6 @@
             }
           });
         });
-
       });
     </script>
 
@@ -67,8 +65,17 @@
   <script>
 
       function sumbitform(id) {
-        console.log(id);
-        //$("#forms"+id).ajaxForm({url: "{% url 'guarda' %}", type: 'post'});
+        var form =$("#forms"+id);
+        var url = form.attr('action');
+        
+        $.ajax({type: "POST", url: url, data: form.serialize(), 
+              success: function(data)
+              {
+                  alert('Infromación guardada'); 
+              }
+            });
+        $("#guarda"+id).remove();
+        $("#contenedor"+id).css("background-color", "#228b2257");
         $(".forms"+id).attr("disabled", true);
       }
   
@@ -177,41 +184,43 @@
         var header  =$('<h2></h2>').attr('id','contenedor'+id).text(data.nombre+' - Coincidencias: '+data.total);
 
         var formcontainer = div.clone()
-        var form          = $('<form id="forms'+id+'"></form>');
+        var form          = $('<form id="forms'+id+'" action="{% url 'guarda' %}" method="POST"></form>');
         var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nomber</th><th>Alias</th><th>tipo</th><th>Jaro</th><th>Sound</th><th>Descartar</th><th>Comentario</th></tr></table>');
         var tr            = $('<tr></tr>');
-
-
+        
         form.append($('<input type="hidden" name="idcliente" value="'+id+'"/>'));
-        form.append($('<a class="button button-primary" onclick="sumbitform('+id+')">Guardar Infromacion</a>'));
+        form.append($('<a class="button button-primary" id="guarda'+id+'" onclick="sumbitform('+id+')">Guardar Infromación</a>'));
         form.append($('<input type="hidden" name="nombrecliente" value="'+data.nombre+'"/>'));
 
         var td            = $('<td></td>');
         var newdatos=uniq(data.datos);
+        var compara=[];
         newdatos.forEach(element => {
           var newtr = tr.clone();
+          compara.push(element.id);
+          form.append($('<input type="hidden" name="nombrecompara-'+element.id+'" value="'+element.nombre+'"/>'));
           newtr.append(td.clone().text(element.id));
           newtr.append(td.clone().text(element.nombre));
           newtr.append(td.clone().text(element.alias));
           newtr.append(td.clone().text(element.tipo));
           newtr.append(td.clone().text(element.jaro.toFixed(2)));
           newtr.append(td.clone().text(element.sound.toFixed(2)));
-          newtr.append(td.clone().append($('<select class="forms'+id+'" name="conservar-'+element.id+'" id="conservar'+element.id+'" ><option value="des" selected>Descartar</option><option value="rep">Reportar</option></select>')));
+          form.append($('<input type="hidden" name="jaro-'+element.id+'" value="'+element.jaro.toFixed(2)+'"/>'));
+          form.append($('<input type="hidden" name="sound-'+element.id+'" value="'+element.sound.toFixed(2)+'"/>'));
+          newtr.append(td.clone().append($('<select class="forms'+id+'" name="conservar-'+element.id+'" id="conservar'+element.id+'" ><option value="0" selected>Descartar</option><option value="1">Reportar</option></select>')));
           newtr.append(td.clone().append($('<input class="forms'+id+'" type="text" max="250" name="observacion-'+element.id+'" id="comentario'+element.id+'" style="width: 400px;"/>')));
           table.append(newtr);
         });
-
-        form.append(table);
+        form.append($('<input type="hidden" name="'+id+'-idcompara" value="'+compara.join()+'"/>'));
         form.append(table);
         formcontainer.append(form);
-        
 
         $( "#lista" ).append(header);
         $( "#lista" ).append(formcontainer);
         $('.accordion').accordion('destroy').accordion({collapsible: true,active:":last",heightStyle:"content"});
 
       }
-    } );
+    });
   </script>
 
 {% endblock %}
