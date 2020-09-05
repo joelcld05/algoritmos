@@ -64,7 +64,6 @@ def logout(request):
 def guarda(request):
     if request.method == "POST":
         try:
-            
             idcliente=request.POST['idcliente']
             nombrecliente=request.POST['idcliente']
             idcompara=request.POST[idcliente+'-idcompara']
@@ -94,7 +93,7 @@ def initpage(request):
         connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
         conn = pypyodbc.connect(connStr)
         cur = conn.cursor()
-        query = "SELECT id, Nombre FROM clientes"
+        query = 'SELECT id, Nombre, Apellidos FROM clientes'
         cur.execute(query)
         rs = []
         while True:
@@ -124,7 +123,9 @@ def comparewithcsv(name):
     results = []
     sdn=[]
     alias = 'a.k.a. '
+    print(name)
     with open('data.json') as json_file:
+
         data = json.load(json_file)
         for rowdata in data:
             try:
@@ -136,10 +137,10 @@ def comparewithcsv(name):
                     for i in akdata: 
                         if i.find(alias) > 0:
                             akaname     = i.strip().replace(',','').split("'")[1].upper()
-
                             comparename=comparationcompletename(name,akaname,originalsoundx)
                             if comparename[0] >= maxvalue and comparename[1] >= maxvalue:
                                 results.append({'id':row[0],'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjaro, 'sound':rssound})
+                                continue
                             rsjarowords = comparationbyword(name, akaname)
                             if rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
                                 results.append({'id':row[0],'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjarowords[0], 'sound':rsjarowords[1]})
@@ -150,15 +151,16 @@ def comparewithcsv(name):
                         comparename=comparationcompletename(name,akaname,originalsoundx)
                         if comparename[0] >= maxvalue and comparename[1] >= maxvalue:
                             results.append({'id':row[0]+'-'+i[1] ,'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjaro, 'sound':rssound})
+                            continue
                         rsjarowords = comparationbyword(name, akaname)
                         if rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
                             results.append({'id':row[0]+'-'+i[1] ,'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjarowords[0], 'sound':rsjarowords[1]})
                 
                 namecsv     = row[1].replace(',','').upper()
-
                 comparename=comparationcompletename(name,namecsv,originalsoundx)
                 if comparename[0] >= maxvalue and comparename[1] >= maxvalue:
                     results.append({'id':row[0],'nombre':row[1],'alias':'','tipo':row[3],'jaro':rsjaro, 'sound':rssound})
+                    continue
                 
                 rsjarowords = comparationbyword(name, namecsv)
                 if rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
@@ -201,10 +203,6 @@ def comparationbyword(name,compare):
     cuentas = cuentas / max([len(lista1),indexs])
     
     return [cuentaj,cuentas]
-
-
-
-
 
 
 def downloadfile():
