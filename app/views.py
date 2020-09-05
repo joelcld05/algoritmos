@@ -15,7 +15,7 @@ import os
 
 soundex = Soundex()
 maxvalue = 85
-
+connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
 
 @require_http_methods(["GET"])
 def index(request):
@@ -30,7 +30,6 @@ def index(request):
 @csrf_exempt 
 def login(request):
     if request.method == "POST":
-        connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
         conn = pypyodbc.connect(connStr)
         cur = conn.cursor()
         query = "SELECT count(id) FROM tbl_permisos where tipo='Administrador' and  User ='"+request.POST['user'] +"' and password='"+request.POST['password'] +"'"
@@ -60,6 +59,8 @@ def logout(request):
     return response
 
 
+
+
 @csrf_exempt 
 def guarda(request):
     if request.method == "POST":
@@ -68,7 +69,6 @@ def guarda(request):
             nombrecliente=request.POST['idcliente']
             idcompara=request.POST[idcliente+'-idcompara']
             lista1 = list(dict.fromkeys(idcompara.split(',')))
-            connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
             conn = pypyodbc.connect(connStr)
             cur = conn.cursor()
             for a in lista1: 
@@ -90,7 +90,6 @@ def guarda(request):
 def initpage(request):
     if 'username' in request.COOKIES:
         downloadfile()
-        connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
         conn = pypyodbc.connect(connStr)
         cur = conn.cursor()
         query = 'SELECT id, Nombre, Apellidos FROM clientes'
@@ -101,6 +100,9 @@ def initpage(request):
             if row is None:
                 break
             rs.append(row)
+        cur.commit()
+        cur.close()
+        conn.close()
         return HttpResponse(render(request, 'table.html',{'datsdb':json.dumps(rs)}))
     else:
         return HttpResponseRedirect('/')
@@ -111,25 +113,41 @@ def getresult(request):
     if request.method == "POST":
         rs = []
         nombre = request.POST['nombre']
-        response =  comparewithcsv(nombre.replace(',','').upper())
+        idcompara = request.POST['id']
+        conn = pypyodbc.connect(connStr)
+        cur = conn.cursor()
+        query = 'SELECT idcompara FROM DatosGuardados where idclinete ='+idcompara
+        cur.execute(query)
+        skip = []
+        while True:
+            row = cur.fetchone()
+            if row is None:
+                break
+            lista = list(dict.fromkeys(row[0].split('-')))
+            skip.append(lista[0])
+        cur.commit()
+        cur.close()
+        conn.close()
+        response =  comparewithcsv(nombre.replace(',','').upper(), skip)
         totalrs = len(response) 
         if totalrs > 0:
             rs.append({'datos':response,'total':totalrs,'nombre':nombre})
         return JsonResponse(rs,safe=False)
 
 
-def comparewithcsv(name):
+def comparewithcsv(name,skip):
     originalsoundx = soundex.phonetics(name)
     results = []
     sdn=[]
     alias = 'a.k.a. '
-    print(name)
-    with open('data.json') as json_file:
 
+    with open('data.json') as json_file:
         data = json.load(json_file)
         for rowdata in data:
             try:
                 row=rowdata['data']
+                if row[0] in skip:
+                    continue
                 akadata= rowdata['aka']
                 splitaka= row[11].find(alias)
                 if splitaka > 0:
@@ -141,9 +159,11 @@ def comparewithcsv(name):
                             if comparename[0] >= maxvalue and comparename[1] >= maxvalue:
                                 results.append({'id':row[0],'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjaro, 'sound':rssound})
                                 continue
+
                             rsjarowords = comparationbyword(name, akaname)
                             if rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
                                 results.append({'id':row[0],'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjarowords[0], 'sound':rsjarowords[1]})
+                                
                 
                 if len(akadata) > 0:
                     for i in akadata: 
@@ -152,6 +172,7 @@ def comparewithcsv(name):
                         if comparename[0] >= maxvalue and comparename[1] >= maxvalue:
                             results.append({'id':row[0]+'-'+i[1] ,'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjaro, 'sound':rssound})
                             continue
+
                         rsjarowords = comparationbyword(name, akaname)
                         if rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
                             results.append({'id':row[0]+'-'+i[1] ,'nombre':row[1],'alias':akaname,'tipo':row[3],'jaro':rsjarowords[0], 'sound':rsjarowords[1]})
@@ -161,7 +182,7 @@ def comparewithcsv(name):
                 if comparename[0] >= maxvalue and comparename[1] >= maxvalue:
                     results.append({'id':row[0],'nombre':row[1],'alias':'','tipo':row[3],'jaro':rsjaro, 'sound':rssound})
                     continue
-                
+
                 rsjarowords = comparationbyword(name, namecsv)
                 if rsjarowords[1] >= maxvalue and rsjarowords[0] >= maxvalue:
                     results.append({'id':row[0],'nombre':row[1],'alias':'','tipo':row[3],'jaro':rsjarowords[0], 'sound':rsjarowords[1]})  
@@ -237,4 +258,24 @@ def downloadfile():
     except:
         pass
             
-    
+
+
+
+@require_http_methods(["GET"])
+def reportpage(request):
+    if 'username' in request.COOKIES:
+        downloadfile()
+        connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'db.accdb')+";")
+        conn = pypyodbc.connect(connStr)
+        cur = conn.cursor()
+        query = 'SELECT ID Apellidos FROM reprotes'
+        cur.execute(query)
+        rs = []
+        while True:
+            row = cur.fetchone()
+            if row is None:
+                break
+            rs.append(row)
+        return HttpResponse(render(request, 'table.html',{'datsdb':json.dumps(rs)}))
+    else:
+        return HttpResponseRedirect('/')

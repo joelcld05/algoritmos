@@ -24,4 +24,6 @@ urlpatterns = [
     path('resultdos', views.initpage,name='resultados'),
     path('compara', views.getresult,name='compara'),
     path('guarda', views.guarda,name='guarda'),
+    path('reportes', views.reportpage,name='reportes'),
+    
 ]

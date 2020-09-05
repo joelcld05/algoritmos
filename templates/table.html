@@ -139,7 +139,7 @@
           var nombresdata=nombres[inindex][1]?nombres[inindex][1].trim():'';
           var apellidosdata=nombres[inindex][2]?nombres[inindex][2].trim():'';
           var nametrim=nombresdata+' '+apellidosdata;
-          var dataString = {'nombre':nametrim.trim()}
+          var dataString = {'nombre':nametrim.trim(), 'id':nombres[inindex][0]}
           $.ajax({
             type: "POST",
             url: "{% url 'compara' %}",
@@ -180,11 +180,11 @@
 
       function createitemlist(id, data){
         var div=$('<div></div>');
-        var header  =$('<h2></h2>').attr('id','contenedor'+id).text(data.nombre+' - Coincidencias: '+data.total);
+        var header  =$('<h2></h2>').attr('id','contenedor'+id).text('Nombre: '+ data.nombre+' - Coincidencias: '+data.total);
 
         var formcontainer = div.clone()
         var form          = $('<form id="forms'+id+'" action="{% url 'guarda' %}" method="POST"></form>');
-        var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nomber</th><th>Alias</th><th>tipo</th><th>Jaro</th><th>Sound</th><th>Descartar</th><th>Comentario</th></tr></table>');
+        var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nombre OFAC</th><th>Alias</th><th>tipo</th><th>Jaro</th><th>Sound</th><th>Descartar</th><th>Comentario</th></tr></table>');
         var tr            = $('<tr></tr>');
         
         form.append($('<input type="hidden" name="idcliente" value="'+id+'"/>'));
