@@ -3,7 +3,9 @@ Dependencias de python:
     pip install django
     pip install pyphonetics
     pip install jaro-winkler
-
+    pip install openpyxl
+    pip install pandas
+    pip install wheel
 instalar el driver de access ya sea de 64 o 32 bits
 
 Ir a la carpeta y ejecutar 

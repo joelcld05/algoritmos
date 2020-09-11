@@ -25,5 +25,5 @@ urlpatterns = [
     path('compara', views.getresult,name='compara'),
     path('guarda', views.guarda,name='guarda'),
     path('reportes', views.reportpage,name='reportes'),
-    
+    path('export/<int:idreport>', views.printReport,name='export')   
 ]

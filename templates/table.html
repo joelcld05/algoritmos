@@ -24,7 +24,7 @@
         <h4>Clientes encontrados con 85% de coincidencia: <span id="total">0</span></h4>
         <div class="row">
           <a class="button button-primary columns three "  id="inicia">Iniciar búsqueda</a>
-          <a class="button columns three " href="{% url 'logout' %}">Cerrar Sesion</a>
+          <a class="button columns three " href="{% url 'reportes' %}">Reportes</a>
         </div>
         
 
@@ -188,6 +188,9 @@
         var tr            = $('<tr></tr>');
         
         form.append($('<input type="hidden" name="idcliente" value="'+id+'"/>'));
+        form.append($('<input type="hidden" name="idreporte" value="{{ idreporte }}"/>'));
+
+        
         form.append($('<a class="button button-primary" id="guarda'+id+'" onclick="sumbitform('+id+')">Guardar Información</a>'));
         form.append($('<input type="hidden" name="nombrecliente" value="'+data.nombre+'"/>'));
 
