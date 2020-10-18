@@ -24,7 +24,8 @@
         <h4>Clientes encontrados con 85% de coincidencia: <span id="total">0</span></h4>
         <div class="row">
           <a class="button button-primary columns three "  id="inicia">Iniciar búsqueda</a>
-          <a class="button columns three " href="{% url 'reportes' %}">Reportes</a>
+          <a class="button columns two " href="{% url 'reportes' %}">Reportes</a>
+          <a class="button columns two" href="{% url 'logout' %}">Cerrar Sesión</a>                
         </div>
         
 
@@ -66,16 +67,22 @@
       function sumbitform(id) {
         var form =$("#forms"+id);
         var url = form.attr('action');
+        var check = $("#forms"+id)[0].checkValidity();
         
-        $.ajax({type: "POST", url: url, data: form.serialize(), 
-              success: function(data)
-              {
-                  alert('Infromación guardada'); 
-              }
-            });
-        $("#guarda"+id).remove();
-        $("#contenedor"+id).css("background-color", "#228b2257");
-        $(".forms"+id).attr("disabled", true);
+        if (check){
+          $.ajax({type: "POST", url: url, data: form.serialize(), 
+            success: function(data)
+            {
+                alert('Infromación guardada'); 
+            }
+          });
+          $("#guarda"+id).remove();
+          $("#contenedor"+id).css("background-color", "#228b2257");
+          $(".forms"+id).attr("disabled", true);
+        }else{
+          alert('Debe llenar todas las casilla de comentarios.');
+        }
+
       }
   
     $( function() {
@@ -180,7 +187,7 @@
 
       function createitemlist(id, data){
         var div=$('<div></div>');
-        var header  =$('<h2></h2>').attr('id','contenedor'+id).text('Nombre: '+ data.nombre+' - Coincidencias: '+data.total);
+        var header  =$('<h2></h2>').attr('id','contenedor'+id).text('Nombre: '+ data.nombre + ' ('+id+')'+' - Coincidencias: '+data.total);
 
         var formcontainer = div.clone()
         var form          = $('<form id="forms'+id+'" action="{% url 'guarda' %}" method="POST"></form>');
@@ -189,9 +196,8 @@
         
         form.append($('<input type="hidden" name="idcliente" value="'+id+'"/>'));
         form.append($('<input type="hidden" name="idreporte" value="{{ idreporte }}"/>'));
-
         
-        form.append($('<a class="button button-primary" id="guarda'+id+'" onclick="sumbitform('+id+')">Guardar Información</a>'));
+        form.append($('<a class="button button-primary" id="guarda'+id+'" onclick="sumbitform(\''+id+'\')">Guardar Información</a>'));
         form.append($('<input type="hidden" name="nombrecliente" value="'+data.nombre+'"/>'));
 
         var td            = $('<td></td>');
@@ -209,8 +215,8 @@
           newtr.append(td.clone().text(element.sound.toFixed(2)));
           form.append($('<input type="hidden" name="jaro-'+element.id+'" value="'+element.jaro.toFixed(2)+'"/>'));
           form.append($('<input type="hidden" name="sound-'+element.id+'" value="'+element.sound.toFixed(2)+'"/>'));
-          newtr.append(td.clone().append($('<select class="forms'+id+'" name="conservar-'+element.id+'" id="conservar'+element.id+'" ><option value="0" selected>Descartar</option><option value="1">Reportar</option></select>')));
-          newtr.append(td.clone().append($('<input class="forms'+id+'" type="text" max="250" name="observacion-'+element.id+'" id="comentario'+element.id+'" style="width: 400px;"/>')));
+          newtr.append(td.clone().append($('<select class="forms'+id+'" required name="conservar-'+element.id+'" id="conservar'+element.id+'" ><option value="Descartado" selected>Descartar</option><option value="Reportado">Reportar</option></select>')));
+          newtr.append(td.clone().append($('<input class="forms'+id+'" required type="text" max="250" name="observacion-'+element.id+'" id="comentario'+element.id+'" style="width: 400px;"/>')));
           table.append(newtr);
         });
         form.append($('<input type="hidden" name="'+id+'-idcompara" value="'+compara.join()+'"/>'));
