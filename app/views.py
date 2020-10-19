@@ -17,8 +17,6 @@ import json
 import csv
 import os
 
-
-
 comparationscon = sqlite3.connect('comparations.db',check_same_thread=False)
 
 soundex = Soundex()
@@ -66,8 +64,6 @@ def logout(request):
     return response
 
 
-
-
 @csrf_exempt
 def guarda(request):
     if request.method == "POST":
@@ -84,7 +80,7 @@ def guarda(request):
                 query = "insert into tbl_ofac_reportados(idclinete,observacion,idcompara,nombrecompara,reporta,jaro,sound,report,accion)"
                 query +=  " values ('"+idcliente+"','"+request.POST['observacion-'+a].replace("'",'')+"','"+a+"','"+request.POST['nombrecompara-'+a].replace("'",'')
                 query +=  "','"+request.COOKIES['username'].replace("'",'')+"',"+request.POST['jaro-'+a]+","+request.POST['sound-'+a]+","+idinsert+",'"+accion+"' )"
-
+                
                 cur.execute(query)
             cur.commit()
             cur.close()
