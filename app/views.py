@@ -21,7 +21,7 @@ comparationscon = sqlite3.connect('comparations.db',check_same_thread=False)
 
 soundex = Soundex()
 maxvalue = 85
-connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'GFUX_DWH2.accdb')+";")
+connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="+os.path.join(settings.BASE_DIR, 'GFUX_DWH.accdb')+";")
 
 @require_http_methods(["GET"])
 def index(request):
