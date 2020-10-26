@@ -1,8 +1,7 @@
 Dependencias de python:
     pip install pypyodbc
     pip install django
-    pip install pyphonetics
-    pip install jaro-winkler
+    pip install bs4
     pip install openpyxl
     pip install pandas
     pip install wheel

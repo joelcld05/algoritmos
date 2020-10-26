@@ -189,7 +189,7 @@
 
         var formcontainer = div.clone()
         var form          = $('<form id="forms'+id+'" action="{% url 'guarda' %}" method="POST"></form>');
-        var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nombre OFAC</th><th>Alias</th><th>tipo</th><th>Jaro</th><th>Sound</th><th>Descartar</th><th>Comentario</th></tr></table>');
+        var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nombre OFAC</th><th>Dirección</th><th>Tipo</th><th>Programa</th><th>Score</th><th>Descartar</th><th>Comentario</th></tr></table>');
         var tr            = $('<tr></tr>');
         
         form.append($('<input type="hidden" name="idcliente" value="'+id+'"/>'));
@@ -199,22 +199,21 @@
         form.append($('<input type="hidden" name="nombrecliente" value="'+data.nombre+'"/>'));
 
         var td            = $('<td></td>');
-        var newdatos=uniq(data.datos);
+        var newdatos=data.datos;
         var compara=[];
         newdatos.forEach(element => {
           var newtr = tr.clone();
-          compara.push(element.id);
-          form.append($('<input type="hidden" name="nombrecompara-'+element.id+'" value="'+element.nombre+'"/>'));
-          newtr.append(td.clone().text(element.id));
-          newtr.append(td.clone().text(element.nombre));
-          newtr.append(td.clone().text(element.alias));
-          newtr.append(td.clone().text(element.tipo));
-          newtr.append(td.clone().text(element.jaro.toFixed(2)));
-          newtr.append(td.clone().text(element.sound.toFixed(2)));
-          form.append($('<input type="hidden" name="jaro-'+element.id+'" value="'+element.jaro.toFixed(2)+'"/>'));
-          form.append($('<input type="hidden" name="sound-'+element.id+'" value="'+element.sound.toFixed(2)+'"/>'));
-          newtr.append(td.clone().append($('<select class="forms'+id+'" required name="conservar-'+element.id+'" id="conservar'+element.id+'" ><option value="Descartado" selected>Descartar</option><option value="Reportado">Reportar</option></select>')));
-          newtr.append(td.clone().append($('<input class="forms'+id+'" required type="text" max="250" name="observacion-'+element.id+'" id="comentario'+element.id+'" style="width: 400px;"/>')));
+          compara.push(element[0]);
+          form.append($('<input type="hidden" name="nombrecompara-'+element[0]+'" value="'+element[1]+'"/>'));
+          newtr.append(td.clone().text(element[0]));
+          newtr.append(td.clone().text(element[1]));
+          newtr.append(td.clone().text(element[2]));
+          newtr.append(td.clone().text(element[3]));
+          newtr.append(td.clone().text(element[4]));
+          newtr.append(td.clone().text(element[6]));
+          form.append($('<input type="hidden" name="score-'+element[0]+'" value="'+element[6]+'"/>'));
+          newtr.append(td.clone().append($('<select class="forms'+id+'" required name="conservar-'+element[0]+'" id="conservar'+element[0]+'" ><option value="Descartado" selected>Descartar</option><option value="Reportado">Reportar</option></select>')));
+          newtr.append(td.clone().append($('<input class="forms'+id+'" required type="text" max="250" name="observacion-'+element[0]+'" id="comentario'+element[0]+'" style="width: 400px;"/>')));
           table.append(newtr);
         });
         form.append($('<input type="hidden" name="'+id+'-idcompara" value="'+compara.join()+'"/>'));
