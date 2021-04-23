@@ -72,7 +72,11 @@
             success: function(data)
             {
                 alert('Infromación guardada'); 
-            }
+            },
+            error: function(data)
+            {
+                alert('¡ERROR! Infromación NO guardada'); 
+            },
           });
           $("#guarda"+id).remove();
           $("#contenedor"+id).css("background-color", "#228b2257");

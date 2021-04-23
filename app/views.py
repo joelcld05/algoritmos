@@ -19,7 +19,8 @@ import os
 comparationscon = sqlite3.connect('comparations.db',check_same_thread=False)
 
 maxvalue = 75
-connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=\\Grupofux\prestamos clientes\FINANCIERA UNIVERSAL XPRESS\COTIZACIONES\GRUPO_FUX_COTIZADOR\Archivo\GFUX_DWH.accdb;")
+#connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=\\Grupofux\prestamos clientes\FINANCIERA UNIVERSAL XPRESS\COTIZACIONES\GRUPO_FUX_COTIZADOR\Archivo\GFUX_DWH.accdb;")
+connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\Users\HP\Documents\projects\algoritmos\GFUX_DWH.accdb;")
 
 @require_http_methods(["GET"])
 def index(request):
@@ -187,19 +188,21 @@ def searchName(name,skip):
     soup = BeautifulSoup(r.text, 'html.parser')
     rsdata=[]
     table = soup.find(id="gvSearchResults")
+    
     if table is not None:
         for link in table.find_all('tr'):
             newdata=[]
-            linkofac=link.find(id="btnDetails")
+            linkofac=link.a
             actialid=0
             if linkofac is not None:
-                datalink = linkofac.get('href').split(",")[4]
-                actialid= datalink.split("=")[1].replace('"','')
+                actialid = linkofac.get('href').split("=")[1]
+                #actialid= datalink.split("=")[1].replace('"','')
                 newdata.append(actialid)
             if int(actialid) not in skip:
                 for item in link.find_all('td'):
                     newdata.append(item.get_text().strip())
                 rsdata.append(newdata)
+    
     return rsdata
 
 
