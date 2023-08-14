@@ -1,10 +1,11 @@
 Dependencias de python:
-    pip install pypyodbc
-    pip install django
-    pip install bs4
-    pip install openpyxl
-    pip install pandas
-    pip install wheel
+    pip install pypyodbc --user
+    pip install django --user
+    pip install bs4 --user
+    pip install openpyxl --user
+    pip install pandas --user
+    pip install wheel --user
+    pip install requests --user
 instalar el driver de access ya sea de 64 o 32 bits
 
 Ir a la carpeta y ejecutar 

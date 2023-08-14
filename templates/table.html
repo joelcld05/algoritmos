@@ -1,64 +1,65 @@
-{% extends "master.html" %}
-{% load static %}
-{% block content %}
+{% extends "master.html" %} {% load static %} {% block content %}
 <div class="container">
   <div class="row">
-    <div class="column" style="background-color: #dce6f2; padding: 10px;">
+    <div class="column" style="background-color: #dce6f2; padding: 10px">
       <div class="row">
         <div class="nine columns">
-          <div style="color:#1f497d; font-weight:bold; font-size: 28px;">Búsqueda de coincidencias, OFAC</div>
+          <div style="color: #1f497d; font-weight: bold; font-size: 28px">
+            Búsqueda de coincidencias, OFAC
+          </div>
           <div>Busqueda</div>
         </div>
         <div class="three columns">
-          <img src="{% static 'images/Universal.png' %}" style="width: 30%;">
+          <img src="{% static 'images/Universal.png' %}" style="width: 30%" />
         </div>
       </div>
     </div>
   </div>
   <div class="row">
-    <div class="column" style="background-color:#bfbfbf; height: 20px;"></div>
+    <div class="column" style="background-color: #bfbfbf; height: 20px"></div>
   </div>
 
-    <div class="row">
-      <div class="columns" style="margin-top: 1%">
-        <h4>Clientes encontrados con 85% de coincidencia: <span id="total">0</span></h4>
-        <div class="row">
-          <a class="button button-primary columns three "  id="inicia">Iniciar búsqueda</a>
-          <a class="button columns two " href="{% url 'reportes' %}">Reportes</a>
-          <a class="button columns two" href="{% url 'logout' %}">Cerrar Sesión</a>                
-        </div>
-        <div id="dialog" title="Buscando Coincidencias">
-          <div class="progress-label">Iniciando Busqueda...</div>
-          <div id="progressbar"></div>
-        </div>
-
-        <div  class="accordion" id="lista" style="margin-bottom: 30px;">  
-          
-        </div>
+  <div class="row">
+    <div class="columns" style="margin-top: 1%">
+      <h4>
+        Clientes encontrados con 85% de coincidencia: <span id="total">0</span>
+      </h4>
+      <div class="row">
+        <a class="button button-primary columns three" id="inicia"
+          >Iniciar búsqueda</a
+        >
+        <a class="button columns two" href="{% url 'reportes' %}">Reportes</a>
+        <a class="button columns two" href="{% url 'logout' %}"
+          >Cerrar Sesión</a
+        >
       </div>
+      <div id="dialog" title="Buscando Coincidencias">
+        <div class="progress-label">Iniciando Busqueda...</div>
+        <div id="progressbar"></div>
+      </div>
+
+      <div class="accordion" id="lista" style="margin-bottom: 30px"></div>
     </div>
-    
-    
-    <script>
-      $( function() {
-        $( ".guardadatos" ).click(function(e) {
-          var id = $(this).attr('id');
-          var comen = $("#comentario"+id).val();
-          $("#contenedor"+id).addClass('done');
-          $("#forma"+id).remove();
-          var dataString = {'id':id,'comentario': comen}
-          $.ajax({
-            type: "POST",
-            url: "{% url 'guarda' %}",
-            content_type:'application/json',
-            data: dataString,
-              success: function() {
-            }
-          });
+  </div>
+
+  <script>
+    $(function () {
+      $(".guardadatos").click(function (e) {
+        var id = $(this).attr("id");
+        var comen = $("#comentario" + id).val();
+        $("#contenedor" + id).addClass("done");
+        $("#forma" + id).remove();
+        var dataString = { id: id, comentario: comen };
+        $.ajax({
+          type: "POST",
+          url: "{% url 'guarda' %}",
+          content_type: "application/json",
+          data: dataString,
+          success: function () {},
         });
       });
-    </script>
-
+    });
+  </script>
 
   <script>
 
@@ -66,16 +67,16 @@
         var form =$("#forms"+id);
         var url = form.attr('action');
         var check = $("#forms"+id)[0].checkValidity();
-        
+
         if (check){
-          $.ajax({type: "POST", url: url, data: form.serialize(), 
+          $.ajax({type: "POST", url: url, data: form.serialize(),
             success: function(data)
             {
-                alert('Infromación guardada'); 
+                alert('Infromación guardada');
             },
             error: function(data)
             {
-                alert('¡ERROR! Infromación NO guardada'); 
+                alert('¡ERROR! Infromación NO guardada');
             },
           });
           $("#guarda"+id).remove();
@@ -86,7 +87,7 @@
         }
 
       }
-  
+
     $( function() {
 
       var progressTimer,
@@ -112,7 +113,7 @@
             });
           }
         }),
-        
+
         downloadButton = $( "#inicia" )
           .button()
           .on( "click", function() {
@@ -122,7 +123,7 @@
             });
             dialog.dialog( "open" );
           });
-  
+
       progressbar.progressbar({
         value: false,
         change: function() {
@@ -132,7 +133,7 @@
           progressLabel.text( "Completado" );
         }
       });
-  
+
       {% autoescape off %}
       var nombres={{datsdb}}
       {% endautoescape %}
@@ -141,14 +142,13 @@
 
       function progress(inindex=0) {
         var val = progressbar.progressbar( "value" ) || 0;
-        var tamano=nombres.length;
+        var tamano= nombres.length;
         var index = inindex+1;
-        
+
         if(tamano>=index && !exitloop){
-          var nombresdata=nombres[inindex][1]?nombres[inindex][1].trim():'';
-          var apellidosdata=nombres[inindex][2]?nombres[inindex][2].trim():'';
-          var nametrim=nombresdata+' '+apellidosdata;
-          var dataString = {'nombre':nametrim.trim(), 'id':nombres[inindex][0]}
+
+          var dataString = { 'id':nombres[inindex]}
+
           $.ajax({
             type: "POST",
             url: "{% url 'compara' %}",
@@ -156,13 +156,13 @@
             data: dataString
           }).done(function(value) {
             if(value.length>0){
-              createitemlist(nombres[inindex][0],value[0])
+              createitemlist(nombres[inindex],value[0])
               total++;
               $("#total").text(total);
-              
+
             }
             progressbar.progressbar( "value", (index/tamano)*100);
-            progress(index);            
+            progress(index);
           });
         }else{
           exitloop=true;
@@ -187,18 +187,18 @@
         }, []);
       }
 
-      function createitemlist(id, data){
+      function createitemlist(id,data){
         var div=$('<div></div>');
-        var header  =$('<h2></h2>').attr('id','contenedor'+id).text('Nombre: '+ data.nombre + ' ('+id+')'+' - Coincidencias: '+data.total);
+        var header  =$('<h2></h2>').attr('id','contenedor'+id).text('Nombre: '+ data.nombre + ' ('+data.idclinete+')'+' - Coincidencias: '+data.total);
 
         var formcontainer = div.clone()
         var form          = $('<form id="forms'+id+'" action="{% url 'guarda' %}" method="POST"></form>');
         var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nombre OFAC</th><th>Dirección</th><th>Tipo</th><th>Programa</th><th>Score</th><th>Descartar</th><th>Comentario</th></tr></table>');
         var tr            = $('<tr></tr>');
-        
+
         form.append($('<input type="hidden" name="idcliente" value="'+id+'"/>'));
         form.append($('<input type="hidden" name="idreporte" value="{{ idreporte }}"/>'));
-        
+
         form.append($('<a class="button button-primary" id="guarda'+id+'" onclick="sumbitform(\''+id+'\')">Guardar Información</a>'));
         form.append($('<input type="hidden" name="nombrecliente" value="'+data.nombre+'"/>'));
 
@@ -221,6 +221,7 @@
           table.append(newtr);
         });
         form.append($('<input type="hidden" name="'+id+'-idcompara" value="'+compara.join()+'"/>'));
+        form.append($('<input type="hidden" name="'+data.idclinete+'-idclinete-idcompara" value="'+compara.join()+'"/>'));
         form.append(table);
         formcontainer.append(form);
 
@@ -231,4 +232,5 @@
     });
   </script>
 
-{% endblock %}
+  {% endblock %}
+</div>

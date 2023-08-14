@@ -21,9 +21,10 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('login', views.login, name='login'),
     path('logout', views.logout, name='logout'),
-    path('resultdos', views.initpage,name='resultados'),
+    path('resultados/<int:idreport>', views.reportpage,name='resultados'),
+    path('createreporte', views.create_reporte,name='createreporte'),
     path('compara', views.getresult,name='compara'),
     path('guarda', views.guarda,name='guarda'),
-    path('reportes', views.reportpage,name='reportes'),
-    path('export/<int:idreport>', views.printReport,name='export')   
+    path('reportes', views.reportpageIndex,name='reportes'),
+    path('export/<int:idreport>', views.printReport, name='export')   
 ]

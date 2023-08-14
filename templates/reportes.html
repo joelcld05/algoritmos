@@ -1,64 +1,84 @@
-{% extends "master.html" %}
-{% load static %}
+{% extends "master.html" %} 
+{% load static %} 
 {% block content %}
 <div class="container">
-    <div class="row">
-      <div class="column" style="background-color: #dce6f2; padding: 10px;">
-        <div class="row">
-          <div class="nine columns">
-            <div style="color:#1f497d; font-weight:bold; font-size: 28px;">Búsqueda de coincidencias, OFAC</div>
-            <div>Reportes</div>
+  <div class="row">
+    <div class="column" style="background-color: #dce6f2; padding: 10px">
+      <div class="row">
+        <div class="nine columns">
+          <div style="color: #1f497d; font-weight: bold; font-size: 28px">
+            Búsqueda de coincidencias, OFAC
           </div>
-          <div class="three columns">
-            <img src="{% static 'images/Universal.png' %}" style="width: 30%;">
+          <div>Reportes</div>
+        </div>
+        <div class="three columns">
+          <img src="{% static 'images/Universal.png' %}" style="width: 30%" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="column" style="background-color: #bfbfbf; height: 20px"></div>
+  </div>
+  <div class="row">
+    <div class="three columns">
+      <div class="row">
+        <div class="columns">
+          <h4>Opciones</h4>
+
+          <div class="row">
+            <a class="button columns" href="{% url 'logout' %}" >
+              Cerrar Sesión
+            </a>
+            <form action="{% url 'createreporte' %}" method="POST">        
+              <button class="button button-primary columns" type="submit">Crear Nuevo Reporte</a>
+                {% csrf_token %}  
+            </form>
           </div>
         </div>
       </div>
     </div>
-    <div class="row">
-      <div class="column" style="background-color:#bfbfbf; height: 20px;"></div>
-    </div>
-    <div class="row">
-        <div class="three columns">
-          <div class="row">
-            <div class="columns">
-              <h4>Opciones</h4>
-              <div class="row">
-                <a class="button button-primary columns"  href="{% url 'resultados' %}" id="inicia">Realizar Búsqueda</a>
-              </div>
-              <div class="row">
-                <a class="button columns" href="{% url 'logout' %}">Cerrar Sesión</a>                
-              </div>
-            </div>
-          </div>
+    <div class="nine columns">
+      <div class="row">
+        <div class="columns">
+          <h4>Últimos 12 Reportes Realizados:</h4>
+          <table class="ten columns">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Usuario que Reporta</th>
+                <th>Coincidencias</th>
+                <th>Opciones</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for dato in datsdb %}
+              <tr>
+                <td>{{ dato.fecha }}</td>
+                <td>{{ dato.usuario }}</td>
+                <td>{{ dato.totales }}</td>
+                <td>
+                  {% if dato.status == 1 %}
+                  <a class="button button-primary" href="export/{{ dato.id }}">
+                    Exportar
+                  </a>
+                  {% else %}
+                  <a
+                    class="button columns"
+                    href="resultados/{{ dato.id }}"
+                    id="inicia"
+                    >Realizar Búsqueda</a
+                  >
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-        <div class="nine columns">
-          <div class="row">
-            <div class="columns">
-              <h4>Últimos 12 Reportes Realizados:</h4>
-              <table  class="ten columns">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Usuario que Reporta</th>
-                    <th>Coincidencias</th>
-                    <th>Opciones</th>
-                  </tr>
-                <tbody>
-                  {% for dato in datsdb %}
-                    <tr>
-                      <td>{{ dato.fecha }}</td>
-                      <td>{{ dato.usuario }}</td>
-                      <td>{{ dato.totales }}</td>
-                      <td><a class="button button-primary" href="export/{{ dato.id }}">Exportar</a></td>
-                    </tr>
-                  {% endfor %}
-                </tbody>
-              
-              </table>
-            </div>
-          </div>
-        </div>
+      </div>
     </div>
   </div>
+</div>
 {% endblock %}
