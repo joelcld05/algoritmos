@@ -24,7 +24,12 @@
 - Clearing
 - Media Queries
 */
-
+.alert-error{
+  background-color: #ff5959;
+  font-weight: bold;
+  color: white;
+  padding: 2px;
+}
 
 input:disabled,select:disabled {
   background: #dddddd !important;
@@ -408,14 +413,6 @@ hr {
   clear: both; }
 
 
-/* Media Queries
-–––––––––––––––––––––––––––––––––––––––––––––––––– */
-/*
-Note: The best way to structure the use of media queries is to create the queries
-near the relevant code. For example, if you wanted to change the styles for buttons
-on small devices, paste the mobile query code up in the buttons section and style it
-there.
-*/
 
 
 /* Larger than mobile */

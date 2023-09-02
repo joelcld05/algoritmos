@@ -22,6 +22,7 @@ urlpatterns = [
     path('login', views.login, name='login'),
     path('logout', views.logout, name='logout'),
     path('resultados/<int:idreport>', views.reportpage,name='resultados'),
+    path('finaliza/<int:idreport>', views.endReport,name='finaliza'),
     path('createreporte', views.create_reporte,name='createreporte'),
     path('compara', views.getresult,name='compara'),
     path('guarda', views.guarda,name='guarda'),

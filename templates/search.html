@@ -1,0 +1,439 @@
+{% extends "master.html" %} {% load static %} {% block content %}
+<div class="container">
+  <div class="row">
+    <div class="column" style="background-color: #dce6f2; padding: 10px">
+      <div class="row">
+        <div class="nine columns">
+          <div style="color: #1f497d; font-weight: bold; font-size: 28px">
+            Búsqueda de coincidencias, OFAC
+          </div>
+          <div>Busqueda</div>
+        </div>
+        <div class="three columns">
+          <img src="{% static 'images/Universal.png' %}" style="width: 30%" />
+        </div>
+      </div>
+    </div>
+  </div>
+  {% if messages %}
+      {% for message in messages %}
+          <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}" role="alert">{{ message }}</div>
+      {% endfor %}
+  {% endif %}
+  <div class="row">
+    <div class="column" style="background-color: #bfbfbf; height: 20px"></div>
+  </div>
+
+  <div class="row">
+    <div class="columns" style="margin-top: 1%">
+      <div class="row">
+        <a class="button" href="{% url 'reportes'   %}"> Volver </a>
+        <h4>
+          Clientes encontrados con 85% de coincidencia:
+          <span id="total">0</span>
+        </h4>
+      </div>
+      <div class="row" style="margin-bottom: 1%">
+        <div class="columns four">
+          <p>
+            Total reportados: <br />
+            <strong>
+              <span id="total_reported"></span>
+            </strong>
+          </p>
+        </div>
+        <div class="columns four">
+          <p>
+            Total de busquedas: <br />
+            <strong>
+              <span id="totales_completed"></span> /
+              <span id="total_search"></span>
+            </strong>
+          </p>
+        </div>
+        <div class="columns four">
+          <p>
+            Estado de reporte: <br />
+            <strong>
+              <span id="total_status"></span>
+            </strong>
+          </p>
+        </div>
+      </div>
+      <div class="row" style="margin-bottom: 15px">
+        <a
+          class="button button-primary columns three"
+          id="inicia"
+          style="margin-right: 15px"
+        >
+          Iniciar búsqueda
+        </a>
+
+        <form
+          action="{% url 'finaliza' idreporte  %}"
+          method="POST"
+          id="finaliza"
+        >
+          <button class="button columns four" type="submit">
+            Finalizar Reporte
+          </button>
+          {% csrf_token %}
+        </form>
+      </div>
+
+      <div id="dialog" title="Buscando Coincidencias">
+        <div class="progress-label">Iniciando Busqueda...</div>
+        <div id="progressbar"></div>
+      </div>
+
+      <div class="accordion" id="lista" style="margin-bottom: 30px">
+        {% for datoreportesmade in reportesmade %}
+        <h2
+          id="contenedor{{datoreportesmade.id}}"
+        >
+          </span>
+          Nombre: {{datoreportesmade.data.nombre}}
+          ({{datoreportesmade.data.idclinete}}) - Coincidencias:
+          {{datoreportesmade.data.total}}
+        </h2>
+        <div>
+          <form
+            id="forms{{datoreportesmade.id}}"
+            action="/guarda"
+            method="POST"
+          >
+            <input
+              type="hidden"
+              name="idcliente"
+              value="{{datoreportesmade.id}}"
+            />
+            <input
+              type="hidden"
+              name="idclientedb"
+              value="{{datoreportesmade.data.idclinete}}"
+            />
+            <input type="hidden" name="idreporte" value="{{idreporte}}" />
+            <input
+              type="hidden"
+              name="nombrecliente"
+              value="{{datoreportesmade.data.nombre}}"
+            />
+
+            <input
+              type="hidden"
+              name="{{datoreportesmade.id}}-idcompara"
+              value="{{datoreportesmade.data.comparacion}}"
+            />
+
+            <input
+              type="hidden"
+              name="{{datoreportesmade.data.idclinete}}-idclinete-idcompara"
+              value="{{datoreportesmade.data.comparacion}}"
+            />
+
+            <a
+              class="button button-primary"
+              id="guarda{{datoreportesmade.id}}"
+              onclick="sumbitform('{{datoreportesmade.id}}')"
+            >
+              Guardar Información
+            </a>
+
+            <table style="width: 100%">
+              <tbody>
+                <tr>
+                  <th>Id</th>
+                  <th>Nombre OFAC</th>
+                  <th>Dirección</th>
+                  <th>Tipo</th>
+                  <th>Programa</th>
+                  <th>Score</th>
+                  <th>Descartar</th>
+                  <th>Comentario</th>
+                </tr>
+                {% with name="World" %}  
+                
+                {% for founddata in datoreportesmade.data.datos %}
+                
+                <tr>
+                  <input
+                    type="hidden"
+                    name="nombrecompara-{{founddata.7}}"
+                    value="{{founddata.1}}"
+                  />
+                  <input
+                    type="hidden"
+                    name="score-{{founddata.7}}"
+                    value="{{founddata.6}}"
+                  />
+                  <td>{{founddata.0}}</td>
+                  <td>{{founddata.1}}</td>
+                  <td>{{founddata.2}}</td>
+                  <td>{{founddata.3}}</td>
+                  <td>{{founddata.4}}</td>
+                  <td>{{founddata.6}}</td>
+                  <td>
+                    <select
+                      class="forms{{datoreportesmade.id}}"
+                      required=""
+                      name="conservar-{{founddata.7}}"
+                      id="conservar{{founddata.7}}"
+                    >
+                      <option value="Descartado" selected>Descartar</option>
+                      <option value="Reportado">Reportar</option>
+                    </select>
+                  </td>
+                  <td>
+                    <input
+                      class="forms{{datoreportesmade.id}}"
+                      required
+                      type="text"
+                      max="250"
+                      name="observacion-{{founddata.7}}"
+                      id="comentario{{founddata.7}}"
+                      style="width: 400px"
+                    />
+                  </td>
+                </tr>
+                {% endfor %}
+
+                {% endwith %}
+              </tbody>
+              
+
+             
+            </table>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <script>
+    $(function () {
+      $(".guardadatos").click(function (e) {
+        var id = $(this).attr("id");
+        var comen = $("#comentario" + id).val();
+        $("#contenedor" + id).addClass("done");
+        $("#forma" + id).remove();
+        var dataString = { id: id, comentario: comen };
+        $.ajax({
+          type: "POST",
+          url: "{% url 'guarda' %}",
+          content_type: "application/json",
+          data: dataString,
+          success: function () {},
+        });
+      });
+    });
+  </script>
+
+  <script>
+
+      var total_reported=0
+      var totales_completed=0
+      var found=0
+      function addOneReported(){
+        total_reported+=1
+        $( "#total_reported" ).text(total_reported)
+      }
+      function addOneSearch(){
+        totales_completed+=1
+        $( "#totales_completed" ).text(totales_completed)
+      }
+
+      function sumbitform(id) {
+        var form =$("#forms"+id);
+        var url = form.attr('action');
+        var check = $("#forms"+id)[0].checkValidity();
+
+        if (check){
+          $.ajax({type: "POST", url: url, data: form.serialize(),
+            success: function(data)
+            {
+              addOneReported()
+              $("#contenedor"+id).css("background-color", "#228b2257").css("color", "white");
+              $("#guarda"+id).remove();
+              $(".forms"+id).attr("disabled", true);
+
+            },
+            error: function(data)
+            {
+                alert('¡ERROR! Infromación NO guardada');
+            },
+          });
+
+        }else{
+          alert('Debe llenar todas las casillas de comentarios.');
+        }
+
+      }
+
+
+
+    $( function() {
+      $("#finaliza").on( "submit", function( event ) {
+        event.preventDefault();
+        if( confirm( "¿Seguro desea finalizar el reporte?" )){
+          this.submit()
+        }
+      });
+      var progressTimer,
+        progressbar = $( "#progressbar" ),
+        progressLabel = $( ".progress-label" ),
+        exitloop=false,
+        dialog = $( "#dialog" ).dialog({
+          autoOpen: false,
+          closeOnEscape: false,
+          resizable: false,
+          close: closeDownload,
+          overlay: {
+            opacity: 0.5,
+            background: "black"
+          },
+          open: function() {
+            progressTimer = setTimeout( progress, 100 );
+          },
+          beforeClose: function() {
+            downloadButton.button( "option", {
+              disabled: false,
+              label: "Iniciando Busqueda"
+            });
+          }
+        }),
+
+        downloadButton = $( "#inicia" )
+          .button()
+          .on( "click", function() {
+            $( this ).button( "option", {
+              disabled: true,
+              label: "Buscando Coincidencias..."
+            });
+            dialog.dialog( "open" );
+          });
+
+      progressbar.progressbar({
+        value: false,
+        change: function() {
+          progressLabel.text( "Progreso: " + progressbar.progressbar( "value" ).toFixed(2) + "%" );
+        },
+        complete: function() {
+          progressLabel.text( "Completado" );
+        }
+      });
+
+      {% autoescape off %}
+      var nombres={{datsdb}};
+      var totalsSearch={{totals}};
+      {% endautoescape %}
+      total_reported=parseInt(totalsSearch[0])
+      found+=total_reported;
+      totales_completed=parseInt(totalsSearch[2])
+      let statusreport=totalsSearch[3]===0?"Sin finalizar":"Finalizado"
+      $( "#total_reported" ).text(total_reported)
+      $( "#totales_completed" ).text(totales_completed)
+      $( "#total_search" ).text(totalsSearch[1])
+      $( "#total_status" ).text(statusreport)
+      $( "#total" ).text(found);
+      totalsSearch=null;
+
+
+      function progress(inindex=0) {
+        var val = progressbar.progressbar( "value" ) || 0;
+        var tamano= nombres.length;
+        var index = inindex+1;
+
+        if(tamano>=index && !exitloop){
+
+          var dataString = { 'id':nombres[inindex]}
+
+          $.ajax({
+            type: "POST",
+            url: "{% url 'compara' %}",
+            content_type:'application/json',
+            data: dataString
+          }).done(function(value) {
+            if(value.length>0){
+              createitemlist(nombres[inindex],value[0])
+              found++;
+              $("#total").text(found);
+            }
+            progressbar.progressbar( "value", (index/tamano)*100);
+            progress(index);
+            addOneSearch()
+          });
+        }else{
+          exitloop=true;
+          $( "#dialog" ).dialog("close");
+        }
+      }
+
+      function closeDownload() {
+        exitloop=true;
+        $( "#dialog" ).dialog("close");
+        alert('Búsqueda Detenida');
+      }
+
+      function uniq(arr) {
+        return  arr.reduce((acc, current) => {
+          const x = acc.find(item => item.id === current.id);
+          if (!x) {
+            return acc.concat([current]);
+          } else {
+            return acc;
+          }
+        }, []);
+      }
+
+      function createitemlist(id,data){
+        var div=$('<div></div>');
+        var header  =$('<h2></h2>').attr('id','contenedor'+id).text('Nombre: '+ data.nombre + ' ('+data.idclinete+')'+' - Coincidencias: '+data.total);
+
+        var formcontainer = div.clone()
+        var form          = $('<form id="forms'+id+'" action="{% url 'guarda' %}" method="POST"></form>');
+        var table         = $('<table style="width: 100%;"><tr><th>Id</th><th>Nombre OFAC</th><th>Dirección</th><th>Tipo</th><th>Programa</th><th>Score</th><th>Descartar</th><th>Comentario</th></tr></table>');
+        var tr            = $('<tr></tr>');
+
+        form.append($('<input type="hidden" name="idcliente" value="'+id+'"/>'));
+        form.append($('<input type="hidden" name="idclientedb" value="'+data.idclinete+'"/>'));
+        form.append($('<input type="hidden" name="idreporte" value="{{ idreporte }}"/>'));
+
+        form.append($('<a class="button button-primary" id="guarda'+id+'" onclick="sumbitform(\''+id+'\')">Guardar Información</a>'));
+        form.append($('<input type="hidden" name="nombrecliente" value="'+data.nombre+'"/>'));
+
+        var td            = $('<td></td>');
+        var newdatos=data.datos;
+        var compara=[];
+        var incompara=0
+        newdatos.forEach(element => {
+          var newtr = tr.clone();
+          incompara++
+          var uniqueId=incompara +"~"+element[0]
+          compara.push(uniqueId);
+          form.append($('<input type="hidden" name="nombrecompara-'+uniqueId+'" value="'+element[1]+'"/>'));
+          form.append($('<input type="hidden" name="score-'+uniqueId+'" value="'+element[6]+'"/>'));
+          newtr.append(td.clone().text(element[0]));
+          newtr.append(td.clone().text(element[1]));
+          newtr.append(td.clone().text(element[2]));
+          newtr.append(td.clone().text(element[3]));
+          newtr.append(td.clone().text(element[4]));
+          newtr.append(td.clone().text(element[6]));
+          newtr.append(td.clone().append($('<select class="forms'+id+'" required name="conservar-'+uniqueId+'" id="conservar'+uniqueId+'" ><option value="Descartado" selected>Descartar</option><option value="Reportado">Reportar</option></select>')));
+          newtr.append(td.clone().append($('<input class="forms'+id+'" required type="text" max="250" name="observacion-'+uniqueId+'" id="comentario'+uniqueId+'" style="width: 400px;"/>')));
+          table.append(newtr);
+        });
+        form.append($('<input type="hidden" name="'+id+'-idcompara" value="'+compara.join()+'"/>'));
+        form.append($('<input type="hidden" name="'+data.idclinete+'-idclinete-idcompara" value="'+compara.join()+'"/>'));
+        form.append(table);
+        formcontainer.append(form);
+
+        $( "#lista" ).append(header);
+        $( "#lista" ).append(formcontainer);
+        $('.accordion').accordion('destroy').accordion({collapsible: true,active:":last",heightStyle:"content"});
+      }
+    });
+  </script>
+
+  {% endblock %}
+</div>

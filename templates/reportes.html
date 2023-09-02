@@ -20,25 +20,29 @@
   <div class="row">
     <div class="column" style="background-color: #bfbfbf; height: 20px"></div>
   </div>
+  <br/>
   <div class="row">
-    <div class="three columns">
+
+    <div class="twelve columns">
       <div class="row">
         <div class="columns">
           <h4>Opciones</h4>
 
           <div class="row">
-            <a class="button columns" href="{% url 'logout' %}" >
+            <a class="columns button three" href="{% url 'logout' %}" >
               Cerrar Sesión
             </a>
-            <form action="{% url 'createreporte' %}" method="POST">        
-              <button class="button button-primary columns" type="submit">Crear Nuevo Reporte</a>
+            <div class="columns three">
+              <form action="{% url 'createreporte' %}" method="POST">        
+                <button class="button button-primary " type="submit">Crear Nuevo Reporte</button>
                 {% csrf_token %}  
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="nine columns">
+    <div class="twelve columns">
       <div class="row">
         <div class="columns">
           <h4>Últimos 12 Reportes Realizados:</h4>
@@ -47,7 +51,9 @@
               <tr>
                 <th>Fecha</th>
                 <th>Usuario que Reporta</th>
+                <th>Busquedas</th>
                 <th>Coincidencias</th>
+                <th>Estado</th>
                 <th>Opciones</th>
               </tr>
             </thead>
@@ -57,10 +63,16 @@
               <tr>
                 <td>{{ dato.fecha }}</td>
                 <td>{{ dato.usuario }}</td>
+                <td>{{ dato.totales_search }}</td>
                 <td>{{ dato.totales }}</td>
+                  {% if dato.status == 0 %}
+                  <td>Sin finalizar</td>
+                  {% else %}
+                  <td>Finalizado</td>
+                  {% endif %}
                 <td>
                   {% if dato.status == 1 %}
-                  <a class="button button-primary" href="export/{{ dato.id }}">
+                  <a class="button button-primary columns" href="export/{{ dato.id }}">
                     Exportar
                   </a>
                   {% else %}

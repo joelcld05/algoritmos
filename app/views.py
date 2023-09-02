@@ -1,37 +1,31 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from algoritmos import settings
-from bs4 import BeautifulSoup
-import urllib.request
 import pandas as pd
-import requests
 import pypyodbc
 import datetime
-import sqlite3
 import json
-import csv
 import os
-import logging
 
-
-# comparationscon = sqlite3.connect("comparations.db", check_same_thread=False)
-
-maxvalue = 75
-# connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=\\Grupofux\prestamos clientes\FINANCIERA UNIVERSAL XPRESS\COTIZACIONES\GRUPO_FUX_COTIZADOR\Archivo\GFUX_DWH.accdb;")
-# connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=C:\Users\HP\Documents\projects\algoritmos\GFUX_DWH.accdb;")
-connStr = (
-    r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="
-    + os.path.join(settings.BASE_DIR, "GFUX_DWH.accdb")
-    + ";"
+from .utils.process import (
+    getToken,
+    logout,
+    connStr,
+    verificareporte,
+    updateUserSearch,
+    searchName,
+    updateUserWithData,
+    updateUserReviewed,
 )
 
 
 @require_http_methods(["GET"])
 def index(request):
     if "username" in request.COOKIES:
-        return HttpResponseRedirect("resultdos")
+        return HttpResponseRedirect("reportes")
     else:
         response = HttpResponse(render(request, "index.html"))
         response.delete_cookie("message")
@@ -39,6 +33,7 @@ def index(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def login(request):
     if request.method == "POST":
         conn = pypyodbc.connect(connStr)
@@ -70,62 +65,50 @@ def login(request):
         return HttpResponseRedirect("reportes")
 
 
-def logout(request):
-    response = HttpResponseRedirect("/")
-    response.delete_cookie("username")
-    return response
-
-
 @csrf_exempt
+@require_http_methods(["POST"])
 def guarda(request):
     if request.method == "POST":
         # try:
         idinsert = request.POST["idreporte"]
         idcliente = request.POST["idcliente"]
+        idclientedb = request.POST["idclientedb"]
         idcompara = request.POST[idcliente + "-idcompara"]
         lista1 = list(dict.fromkeys(idcompara.split(",")))
         conn = pypyodbc.connect(connStr)
         cur = conn.cursor()
-
         for a in lista1:
+            ab = a.split("~")
             accion = request.POST["conservar-" + a]
-            query = "update tbl_ofac_reportados set "
-            query += (
-                "observacion='"
-                + request.POST["observacion-" + a].replace("'", "")
-                + "',idcompara='"
-                + a
-                + "',nombrecompara='"
-                + request.POST["nombrecompara-" + a].replace("'", "")
+            query = """
+            insert into tbl_ofac_reportados (observacion,idcompara,nombrecompara,reporta,jaro,report,accion,idclinete) values
+            (
+            '{}',
+            '{}',
+            '{}',
+            '{}', 
+            {}, 
+            {},
+            '{}',
+            '{}'
+            );
+            """.format(
+                request.POST["observacion-" + a].replace("'", ""),
+                ab[1],
+                request.POST["nombrecompara-" + a].replace("'", ""),
+                request.COOKIES["username"].replace("'", ""),
+                request.POST["score-" + a],
+                idinsert,
+                accion,
+                idclientedb,
             )
 
-            query += (
-                "', reporta='"
-                + request.COOKIES["username"].replace("'", "")
-                + "', jaro="
-                + request.POST["score-" + a]
-                + ",report="
-                + idinsert
-                + ",accion='"
-                + accion
-                + "' where id = "
-                + idcliente
-            )
-
-            # curguarda = comparationscon.cursor()
-            # curguarda.execute(
-            #     "INSERT INTO comparations (idcliente, idofac)  VALUES ('"
-            #     + idcliente
-            #     + "', "
-            #     + a
-            #     + ");"
-            # )
-            # comparationscon.commit()
             cur.execute(query)
+            updateUserReviewed(idcliente)
         cur.commit()
         cur.close()
         conn.close()
-        updateUserSearch(idcliente)
+
         return HttpResponse('{"response":"true"}', content_type="application/json")
     return HttpResponse('{"response":"fasle"}', content_type="application/json")
 
@@ -137,114 +120,120 @@ def reportpage(request, idreport):
         conn = pypyodbc.connect(connStr)
         cur = conn.cursor()
         query = (
-            "SELECT tbl_ofac_clients_search.id FROM tbl_ofac_clients_search where idreporte="
+            "SELECT tbl_ofac_clients_search.id, data, status FROM tbl_ofac_clients_search where revisado=0 and idreporte="
             + str(idreport)
-            + " and status = 0"
+        )
+        queryCount = """
+        select 
+            (select count(t.idclinete) from (select distinct tbl_ofac_reportados.idclinete,report from tbl_ofac_reportados) as t where t.report=tbl_ofac_reportes.ID) as totales_reported, 
+            (select count(tbl_ofac_clients_search.ID) from tbl_ofac_clients_search where tbl_ofac_clients_search.idreporte=tbl_ofac_reportes.ID ) as totales_search, 
+            (select count(tbl_ofac_clients_search.ID) from tbl_ofac_clients_search where tbl_ofac_clients_search.idreporte=tbl_ofac_reportes.ID and status = 1) as totales_completed,
+            status
+        from tbl_ofac_reportes where tbl_ofac_reportes.ID={idreport} 
+        order by tbl_ofac_reportes.fecha desc
+        """.format(
+            idreport=str(idreport)
         )
         cur.execute(query)
 
         rs = []
+        dataFounf = []
         while True:
             row = cur.fetchone()
             if row is None:
                 break
-            rs.append(row[0])
-        cur.commit()
+            if row[1]:
+                dataFounf.append({"id": row[0], "data": json.loads(row[1])})
+            else:
+                if row[2] == 0:
+                    rs.append(row[0])
+
+        # cur.commit()
+
+        rsCount = []
+        cur.execute(queryCount)
+        rsCount = cur.fetchone()
+
         cur.close()
         conn.close()
         return HttpResponse(
             render(
-                request, "table.html", {"datsdb": json.dumps(rs), "idreporte": idreport}
+                request,
+                "search.html",
+                {
+                    "datsdb": json.dumps(rs),
+                    "totals": json.dumps(rsCount),
+                    "idreporte": idreport,
+                    "reportesmade": dataFounf,
+                },
             )
         )
     else:
         return HttpResponseRedirect("/")
 
 
-def verificareporte(username, idinsert):
+@csrf_exempt
+@require_http_methods(["POST"])
+def getresult(request):
+    rs = []
+
+    idcompara = request.POST["id"]
+
+    rows = []  # cursor.fetchall()
+    skip = []
+    for row in rows:
+        skip.append(row[0])
+
     conn = pypyodbc.connect(connStr)
     cur = conn.cursor()
-    query = "SELECT id FROM tbl_ofac_reportes where id=" + idinsert
+    query = (
+        "SELECT OFAC.id, OFAC.Name, OFAC.LastName FROM tbl_ofac_clients_search inner join OFAC on OFAC.ID=tbl_ofac_clients_search.idclinete where tbl_ofac_clients_search.id = "
+        + idcompara
+    )
     cur.execute(query)
-    row = cur.fetchall()
-    if len(row) == 0:
-        conn2 = pypyodbc.connect(connStr)
-        cur2 = conn2.cursor()
-        query = (
-            "insert into tbl_ofac_reportes(id,usuario) values ("
-            + idinsert
-            + ",'"
-            + username
-            + "');"
-        )
-        cur2.execute(query)
-        cur2.commit()
-        cur2.close()
-        conn2.close()
+    rsName = cur.fetchone()
+    cur.commit()
     cur.close()
     conn.close()
-    return len(row)
+
+    nombre = str(rsName[1]).strip() + " " + str(rsName[2]).strip()
+    try:
+        response = searchName(nombre.replace(",", "").upper(), skip)
+        totalrs = len(response)
+
+        if totalrs > 0:
+            compara = []
+            countt = 1
+            for row in response:
+                compara.append("{}~{}".format(countt, row[0]))
+                countt = countt + 1
+            data = {
+                "total": totalrs,
+                "nombre": nombre,
+                "idclinete": rsName[0],
+                "comparacion": ",".join(compara),
+                "datos": response,
+            }
+            rs.append(data)
+            updateUserWithData(json.dumps(data), idcompara)
+        else:
+            updateUserSearch(idcompara)
+
+        return JsonResponse(rs, safe=False)
+    except:
+        return HttpResponse(status=400)
 
 
 @csrf_exempt
-def getresult(request):
-    if request.method == "POST":
-        rs = []
-
-        idcompara = request.POST["id"]
-
-        # cursor = comparationscon.execute(
-        #     "SELECT idofac from comparations where idcliente='" + idcompara + "'"
-        # )
-
-        rows = []  # cursor.fetchall()
-        skip = []
-        for row in rows:
-            skip.append(row[0])
-
-        conn = pypyodbc.connect(connStr)
-        cur = conn.cursor()
-        query = (
-            "SELECT OFAC.id, OFAC.Name, OFAC.LastName FROM tbl_ofac_clients_search inner join OFAC on OFAC.ID=tbl_ofac_clients_search.idclinete where tbl_ofac_clients_search.id = "
-            + idcompara
-        )
-        cur.execute(query)
-        rsName = cur.fetchone()
-        cur.commit()
-        cur.close()
-        conn.close()
-
-        nombre = str(rsName[1]).strip() + " " + str(rsName[2]).strip()
-        try:
-            response = searchName(nombre.replace(",", "").upper(), skip)
-            totalrs = len(response)
-            if totalrs > 0:
-                rs.append(
-                    {
-                        "datos": response,
-                        "total": totalrs,
-                        "nombre": nombre,
-                        "idclinete": rsName[0],
-                    }
-                )
-            else:
-                updateUserSearch(idcompara)
-
-            return JsonResponse(rs, safe=False)
-        except:
-            return HttpResponse(status=400)
-
-
-@csrf_exempt
+@require_http_methods(["POST"])
 def create_reporte(request):
-    if "username" in request.COOKIES and request.method == "POST":
+    if "username" in request.COOKIES:
         idinsert = datetime.datetime.now().strftime("%d%m%Y")
         getToken()
         lenRep = verificareporte(request.COOKIES["username"], idinsert)
         if lenRep == 0:
             conn = pypyodbc.connect(connStr)
             cur = conn.cursor()
-
             query = "SELECT id FROM OFAC where id not in(SELECT distinct idclinete FROM tbl_ofac_reportados where accion ='Reportado')"
             cur.execute(query)
             rows = cur.fetchall()
@@ -263,109 +252,9 @@ def create_reporte(request):
             cur.commit()
             cur.close()
             conn.close()
-
-        return HttpResponseRedirect("/reportes")
+        return HttpResponseRedirect("/resultados/" + idinsert)
     else:
         return HttpResponseRedirect("/")
-
-
-def searchName(name, skip):
-    token = ""
-    with open("ofactoken.json") as json_file:
-        data = json.load(json_file)
-    token = data["token"]
-    r = []
-    r = requests.post(
-        "https://sanctionssearch.ofac.treas.gov/",
-        data={
-            "ctl00_ctl03_HiddenField": ";;AjaxControlToolkit, Version=3.5.40412.0, Culture=neutral",
-            "__EVENTTARGET": "",
-            "__EVENTARGUMENT": "",
-            "__VIEWSTATE": token,
-            "__VIEWSTATEGENERATOR": "CA0B0334",
-            "ctl00$MainContent$ddlType": "",
-            "ctl00$MainContent$txtAddress": "",
-            "ctl00$MainContent$txtLastName": name,
-            "ctl00$MainContent$txtCity": "",
-            "ctl00$MainContent$txtID": "",
-            "ctl00$MainContent$txtState": "",
-            "ctl00$MainContent$lstPrograms": "",
-            "ctl00$MainContent$ddlCountry": "",
-            "ctl00$MainContent$ddlList": "",
-            "ctl00$MainContent$Slider1": "85",
-            "ctl00$MainContent$Slider1_Boundcontrol": "85",
-            "ctl00$MainContent$btnSearch": "Search",
-        },
-    )
-
-    soup = BeautifulSoup(r.text, "html.parser")
-    rsdata = []
-    table = soup.find(id="gvSearchResults")
-
-    if table is not None:
-        for link in table.find_all("tr"):
-            newdata = []
-            linkofac = link.a
-            actialid = 0
-            if linkofac is not None:
-                actialid = linkofac.get("href").split("=")[1]
-                newdata.append(actialid)
-            if int(actialid) not in skip:
-                for item in link.find_all("td"):
-                    newdata.append(item.get_text().strip())
-                rsdata.append(newdata)
-
-    return rsdata
-
-
-def updateUserSearch(idcompara):
-    conn2 = pypyodbc.connect(connStr)
-    cur2 = conn2.cursor()
-    query = (
-        "update tbl_ofac_clients_search set status=1 where tbl_ofac_clients_search.id = "
-        + idcompara
-    )
-    cur2.execute(query)
-    cur2.commit()
-    cur2.close()
-    conn2.close()
-
-
-def downloadfile():
-    try:
-        sdn = []
-        alt = {}
-        name = datetime.datetime.now().strftime("%d-%m-%Y")
-        urlsdn = "https://www.treasury.gov/ofac/downloads/sdn.csv"
-        urlalt = "https://www.treasury.gov/ofac/downloads/alt.csv"
-        urllib.request.urlretrieve(
-            urlsdn, os.path.join(settings.BASE_DIR, "static/data/sdn-" + name + ".csv")
-        )
-        urllib.request.urlretrieve(
-            urlalt, os.path.join(settings.BASE_DIR, "static/data/alt-" + name + ".csv")
-        )
-
-        with open("static/data/alt-" + name + ".csv", newline="") as csvfile:
-            spamreader = csv.reader(csvfile)
-            for row in spamreader:
-                if not row[0] in alt:
-                    alt[row[0]] = [row]
-                else:
-                    alt[row[0]].append(row)
-
-        with open("static/data/sdn-" + name + ".csv", newline="") as csvfile:
-            spamreader = csv.reader(csvfile)
-            for row in spamreader:
-                akadato = []
-                if row[0] in alt:
-                    akadato = alt[row[0]]
-                item = {"data": row, "aka": akadato}
-                sdn.append(item)
-
-        with open("data.json", "w") as write_file:
-            json.dump(sdn, write_file)
-    except:
-        pass
 
 
 @require_http_methods(["GET"])
@@ -373,7 +262,17 @@ def reportpageIndex(request):
     if "username" in request.COOKIES:
         conn = pypyodbc.connect(connStr)
         cur = conn.cursor()
-        query = "select top 12 str(tbl_ofac_reportes.fecha) as fecha, tbl_ofac_reportes.usuario, count(tbl_ofac_reportes.ID) as totales,tbl_ofac_reportes.ID from tbl_ofac_reportes left join tbl_ofac_reportados on tbl_ofac_reportados.report=tbl_ofac_reportes.ID group by tbl_ofac_reportes.ID, tbl_ofac_reportes.fecha, tbl_ofac_reportes.usuario order by tbl_ofac_reportes.fecha desc"
+        query = """
+        select top 100 
+            str(tbl_ofac_reportes.fecha) as fecha, 
+            tbl_ofac_reportes.usuario, 
+            (select count(t.idclinete) from (select distinct tbl_ofac_reportados.idclinete,report from tbl_ofac_reportados) as t where t.report=tbl_ofac_reportes.ID) as totales, 
+            (select count(tbl_ofac_clients_search.ID) from tbl_ofac_clients_search where tbl_ofac_clients_search.idreporte=tbl_ofac_reportes.ID ) as totales_search, 
+            tbl_ofac_reportes.ID,
+            status
+        from tbl_ofac_reportes 
+        order by tbl_ofac_reportes.fecha desc
+        """
         cur.execute(query)
         rs = []
         while True:
@@ -397,7 +296,6 @@ def printReport(request, idreport):
         )
         cur.execute(query)
         row = cur.fetchall()
-
         file_name = str(idreport) + "-reporte.xlsx"
         path_to_file = settings.BASE_DIR + "/static/exports/"
 
@@ -430,18 +328,50 @@ def printReport(request, idreport):
                     "Content-Disposition"
                 ] = "inline; filename=" + os.path.basename(file_path)
                 return response
-        raise HttpResponse(status=[400])
+        return HttpResponse(status=[])
     else:
         return HttpResponseRedirect("/")
 
 
-def getToken():
-    r = []
-    r = requests.get("https://sanctionssearch.ofac.treas.gov/")
-    soup = BeautifulSoup(r.text, "html.parser")
-    table = soup.find(id="__VIEWSTATE")["value"]
-    data = {"token": table}
+@require_http_methods(["POST"])
+def endReport(request, idreport):
+    try:
+        if "username" in request.COOKIES:
+            conn2 = pypyodbc.connect(connStr)
+            cur2 = conn2.cursor()
+            query = (
+                "select count(ID) from tbl_ofac_clients_search where status=0 and idreporte="
+                + str(idreport)
+            )
+            cur2.execute(query)
+            row = cur2.fetchone()
 
-    with open("ofactoken.json", "w") as write_file:
-        json.dump(data, write_file)
-    return False
+            if row[0] > 0:
+                raise
+
+            query = (
+                "select count(ID) from tbl_ofac_clients_search where data is not null and revisado=0 and idreporte="
+                + str(idreport)
+            )
+            cur2.execute(query)
+            row = cur2.fetchone()
+
+            if row[0] > 0:
+                raise
+
+            query = (
+                "update tbl_ofac_reportes set status=1 where tbl_ofac_reportes.id = "
+                + str(idreport)
+            )
+            cur2.execute(query)
+            cur2.commit()
+            cur2.close()
+            conn2.close()
+            return HttpResponseRedirect("/reportes")
+        else:
+            return HttpResponseRedirect("/login")
+    except:
+        messages.error(request, "La búsqueda aún no ha finalizado o existen usuarios que no se han validado")
+        return HttpResponseRedirect(
+            "/resultados/" + str(idreport),
+        )

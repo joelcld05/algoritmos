@@ -1,4 +1,4 @@
-Dependencias de python:
+#Dependencias de python:
     pip install pypyodbc --user
     pip install django --user
     pip install bs4 --user
@@ -6,10 +6,14 @@ Dependencias de python:
     pip install pandas --user
     pip install wheel --user
     pip install requests --user
-instalar el driver de access ya sea de 64 o 32 bits
 
-Ir a la carpeta y ejecutar 
-    python .\manage.py runserver
+#instalar el driver de access ya sea de 64 o 32 bits
+
+#Ir a la carpeta y ejecutar:
+## ejecutar acrchivo vbs
+ejecutable.vbs
+## o ejecutar comando en terminal
+python .\manage.py runserver
 
 
 
