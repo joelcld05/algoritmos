@@ -9,13 +9,13 @@ import json
 import csv
 import os
 
-# connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=\\Grupofux\prestamos clientes\FINANCIERA UNIVERSAL XPRESS\COTIZACIONES\GRUPO_FUX_COTIZADOR\Archivo\GFUX_DWH.accdb;")
+connStr = (r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ=\\Grupofux\prestamos clientes\FINANCIERA UNIVERSAL XPRESS\COTIZACIONES\GRUPO_FUX_COTIZADOR\Archivo\GFUX_DWH.accdb;")
 
-connStr = (
-    r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="
-    + os.path.join(settings.BASE_DIR, "GFUX_DWH.accdb")
-    + ";"
-)
+# connStr = (
+#     r"DRIVER={Microsoft Access Driver (*.mdb, *.accdb)};DBQ="
+#     + os.path.join(settings.BASE_DIR, "GFUX_DWH.accdb")
+#     + ";"
+# )
 
 
 def getToken():
